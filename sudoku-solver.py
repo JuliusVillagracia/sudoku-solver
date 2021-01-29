@@ -65,9 +65,43 @@ def validityChecker(puzzle, x, y, num):
                 return False
     return True
 
+def nextCoordinates(x, y):
+    # Check if out of bounds then iterate coordinates
+    if y == board_size-1:
+        return x + 1, 0
+    else:
+        return x, y + 1 
+
+def backtrack(puzzle, coordinates):
+    # Split the coordinates to x and y
+    x, y = coordinates
+    # Set Base Case as the solved puzzle
+    if solvedChecker(puzzle):
+        return puzzle
+    else:
+        # Trace possible numbers for the cell
+        if puzzle[x][y] == 0:
+            for num in range(1, board_size+1):
+                if validityChecker(puzzle, x, y, num):
+                    puzzle[x][y] = num
+                    solution = backtrack(puzzle, nextCoordinates(x, y))
+                    if solution:
+                        return solution
+                    puzzle[x][y] = 0
+            # Return false if the algorithm finds no possible number to enter
+            return False
+        # Skip the cell when it is already filled
+        else:
+            solution = backtrack(puzzle, nextCoordinates(x, y))
+            return solution
+
 # Print results in the terminal
 print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
 printBoard(puzzle)
 
 print("\n~ ~ ~ SOLVED ~ ~ ~\n")
-# Add Function Call for solution
+answer = backtrack(puzzle, (0, 0))
+if answer:
+    printBoard(answer)
+else:
+    print("[!] The sudoku board has no solutions")
