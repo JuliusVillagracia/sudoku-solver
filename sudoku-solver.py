@@ -40,6 +40,13 @@ def printBoard(puzzle):
             print(puzzle[row][col], end=' ')
         print()
 
+def solvedChecker(puzzle):
+    # Check if the puzzle has been populated completely
+    for row in range(board_size):
+        if 0 in puzzle[row]:
+            return False
+    return True
+
 # Print results in the terminal
 print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
 printBoard(puzzle)
