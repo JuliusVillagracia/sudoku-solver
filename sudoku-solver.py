@@ -47,6 +47,24 @@ def solvedChecker(puzzle):
             return False
     return True
 
+def validityChecker(puzzle, x, y, num):
+    # Check the validity horizontally
+    if num in puzzle[x]:
+        return False
+    # Check the validity vertically
+    for row in range(board_size):
+        if num == puzzle[row][y]:
+            return False
+    # Solve for the beginning of the sub matrix
+    sub_row = int(x - x % sub_size)
+    sub_col = int(y - y % sub_size)
+    # Check the validity within the sub matrix
+    for row in range(sub_size):
+        for col in range(sub_size):
+            if num == puzzle[sub_row + row][sub_col + col]:
+                return False
+    return True
+
 # Print results in the terminal
 print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
 printBoard(puzzle)
