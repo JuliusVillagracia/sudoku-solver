@@ -261,7 +261,7 @@ class gameGUI(Frame):
         self.menu_frame.pack_propagate(0)
 
     def solveBoard(self):
-        self.puzzle = algo.backtrack(deepcopy(self.original_puzzle), (0, 0))
+        self.puzzle = algo.solve(deepcopy(self.original_puzzle))
         if self.puzzle:
             self.drawPuzzle()
         else:
@@ -312,15 +312,16 @@ class gameGUI(Frame):
         self.enterframe.pack_propagate(0)
 
     def enterPuzzle(self):
-        # Clear out the menu to make room for a new frame 
-        self.enterframe.destroy()
+        if algo.solve(deepcopy(self.puzzle)):
+            # Clear out the menu to make room for a new frame 
+            self.enterframe.destroy()
 
-        # Register the player input into the puzzle
-        self.original_puzzle = deepcopy(self.puzzle)
-        self.drawPuzzle()
-        
-        # Re-intialize the menu
-        self.initMenu()
+            # Register the player input into the puzzle
+            self.original_puzzle = deepcopy(self.puzzle)
+            self.drawPuzzle()
+            
+            # Re-intialize the menu
+            self.initMenu()
 
     def openSettings(self):
         # Clear out the frames to transition into settings 

@@ -8,8 +8,8 @@ puzzle = [
     [0, 0, 0, 6, 0, 9, 0, 5, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1],
     [0, 7, 2, 5, 0, 3, 6, 8, 0],
-    [6, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 8, 0, 2, 0, 5, 0, 0, 0],
+    [6, 0, 0, 0, 5, 0, 0, 0, 0],
+    [0, 8, 0, 2, 0, 0, 0, 0, 0],
     [1, 0, 0, 0, 9, 0, 0, 0, 3],
     [0, 0, 9, 8, 0, 0, 0, 6, 0]
 ]
@@ -98,12 +98,57 @@ def backtrack(puzzle, coordinates):
             solution = backtrack(puzzle, nextCoordinates(x, y))
             return solution
 
-# Print results in the terminal
+def solve(puzzle):
+    # Initialize variables for tracking
+    check_col = []
+    check_sub = []
+
+    # Loop through the board and verify that it is valid before backtracking
+    for x in range(board_size):
+        for y in range(board_size):
+            # Track columns as it loops
+            check_col.append(puzzle[y][x])
+
+            # Only track sub matrices in the beggining of each sub section
+            if x % sub_size == 0 and y % sub_size == 0:
+                for row2 in range(sub_size):
+                    for col2 in range(sub_size):
+                        check_sub.append(puzzle[sub_size * (x // sub_size) + row2][sub_size * (y // sub_size) + col2])
+
+                # Loop through all possible entries for counting
+                for num in range(1, board_size+1):
+                    # Check sub matrices
+                    if check_sub.count(num) > 1:
+                        return False
+                        # return "Invalid Repeat at sub matrix " + str(x // sub_size) + ' ' + str(y // sub_size) + " of num " + str(num)
+
+                # Reset Tracker
+                check_sub = []
+
+        # Loop through all possible entries for counting
+        for num in range(1, board_size+1):
+            # Check rows
+            if puzzle[x].count(num) > 1:
+                return False
+                # return "Invalid Repeat at row " + str(x) + " of num " + str(num)
+            # Check columns
+            if check_col.count(num) > 1:
+                return False
+                # return "Invalid Repeat at col " + str(x) + " of num " + str(num)
+
+        # Reset Tracker
+        check_col = []
+
+    # Once validity is confirmed, run the backtracking algorithm
+    return backtrack(puzzle, (0, 0))
+
+# Print results in the terminasl
 # print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
 # printBoard(puzzle)
 
 # print("\n~ ~ ~ SOLVED ~ ~ ~\n")
-# answer = backtrack(puzzle, (0, 0))
+# answer = solve(puzzle)
+# print(answer)
 # if answer:
 #     printBoard(answer)
 # else:
