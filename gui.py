@@ -1,6 +1,7 @@
 # Import Necessary Libraries
 from tkinter import Tk, Frame, Canvas, Button
 from PIL import ImageTk, Image
+from copy import deepcopy
 
 # Import Other Files
 import importlib  
@@ -9,13 +10,13 @@ algo = importlib.import_module("sudoku-solver")
 class gameGUI(Frame):
     def __init__(self, parent):
         # Configure board size
-        self.size = 9
+        self.board_size = 9
 
         # Configure GUI dimensions
         self.multi = 1 # 0.8, 1, 1.2
         self.margin = int(20 * self.multi) # Space around the board
         self.cell_dim = int(50 * self.multi) # Dimension of every board cell.
-        self.width = self.height = self.margin * 2 + self.cell_dim * self.size  # Width and height of the whole board
+        self.width = self.height = self.margin * 2 + self.cell_dim * self.board_size  # Width and height of the whole board
         self.menu = self.margin * 2 + self.cell_dim * 2 # Extra space for the menu
 
         # Configure parent of game frame
@@ -66,8 +67,8 @@ class gameGUI(Frame):
         self.game_canvas.create_image(self.width-self.margin//2, self.margin//2, image=self.img, tags='settings')
 
         # Draw the board contents within the canvas
-        self.drawGrid()
         self.drawPuzzle()
+        self.drawGrid()
 
         # Bind keys to the canvas for tracking
         self.game_canvas.bind("<Button-1>", self.cellClicked)
@@ -100,24 +101,57 @@ class gameGUI(Frame):
         self.game_canvas.delete("grid_lines")
         
         # Loop and create horizontal and vertical lines across
-        for i in range(self.size + 1):
+        for i in range(self.board_size + 1):
             color = "black" if i % 3 == 0 else "gray"
             w = 3 if i % 3 == 0 else 1
+            tag = "grid_thick" if i % 3 == 0 else "grid_lines"
 
+            # Vertical Lines
             x0 = self.margin + i * self.cell_dim
             y0 = self.margin
             x1 = self.margin + i * self.cell_dim
             y1 = self.height - self.margin
-            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags="grid_lines")
+            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags=tag)
 
+            # Horizontal Lines
             x0 = self.margin
             y0 = self.margin + i * self.cell_dim
             x1 = self.width - self.margin
             y1 = self.margin + i * self.cell_dim
-            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags="grid_lines")
+            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags=tag)
+        
+        # Raise the thicker borders above the other components
+        self.game_canvas.tag_raise("grid_thick", "grid_lines")
 
     def drawPuzzle(self):
-        pass
+        # Clear the canvas of any puzzle components before drawing new puzzle
+        self.game_canvas.delete("entries")
+        self.game_canvas.delete("locked_cells")
+
+        # Fill in each cell with the puzzle entry from the current puzzle state
+        for i in range(self.board_size):
+            for j in range(self.board_size):
+                # Differently format cell's containing hint entries
+                font = "Inconsolata " + str(int(20*self.multi)) + " bold" if self.original_puzzle[i][j] != 0 else "Inconsolata " + str(int(20*self.multi))
+                color = "white" if self.original_puzzle[i][j] != 0 else "black"
+
+                # Highlight hint entries with gray boxes
+                if self.original_puzzle[i][j] != 0:
+                    x0 = self.margin + j * self.cell_dim
+                    y0 = self.margin + i * self.cell_dim
+                    x1 = (self.margin + j * self.cell_dim) + self.cell_dim
+                    y1 = (self.margin + i * self.cell_dim) + self.cell_dim
+                    self.game_canvas.create_rectangle(x0, y0, x1, y1, fill='gray', tags="locked_cells")
+                
+                # Draw entries into the canvas according to current puzzle state
+                if self.puzzle[i][j] != 0:
+                    x = self.margin + j * self.cell_dim + self.cell_dim / 2
+                    y = self.margin + i * self.cell_dim + self.cell_dim / 2
+                    self.game_canvas.create_text(x, y, text=self.puzzle[i][j], tags="entries", fill=color, font=font)
+        
+        # Raise the border above the boxes
+        self.game_canvas.tag_raise("grid_thick", "locked_cells")
+        self.game_canvas.tag_raise("grid_lines", "locked_cells")
 
     def cellClicked(self, event):
         pass
