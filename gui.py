@@ -2,6 +2,7 @@
 from tkinter import Tk, Frame, Canvas, Button, Event, Label, StringVar, OptionMenu
 from PIL import ImageTk, Image
 from copy import deepcopy
+from time import sleep
 
 # Import Other Files
 import importlib  
@@ -48,6 +49,13 @@ class gameGUI(Frame):
             [0, 8, 0, 2, 0, 5, 0, 0, 0],
             [1, 0, 0, 0, 9, 0, 0, 0, 3],
             [0, 0, 9, 8, 0, 0, 0, 6, 0]]
+        self.collection = []
+
+        # Initialize Frames
+        self.game_canvas = None
+        self.menu_frame = None
+        self.register_frame = None
+        self.settings_frame = None
 
         # Initialize Inner Frames
         self.initBoard()
@@ -124,8 +132,13 @@ class gameGUI(Frame):
     def drawPuzzle(self):
         # Clear the canvas of any puzzle components before drawing new puzzle
         self.game_canvas.delete("entries")
-        if self.game_canvas.find_withtag("locked_cells") != ():
+        if self.game_canvas.find_withtag("locked_cells"):
             self.game_canvas.delete("locked_cells")
+        if self.game_canvas.find_withtag("algo_filled"):
+            self.game_canvas.delete("algo_filled")
+
+        # Initialze a variable for streak tracking within the algorithm
+        streak = True
 
         # Fill in each cell with the puzzle entry from the current puzzle state
         for i in range(self.board_size):
@@ -133,6 +146,27 @@ class gameGUI(Frame):
                 # Differently format cell's containing hint entries
                 font = "Inconsolata " + str(int(20*self.screen_size)) + " bold" if self.original_puzzle[i][j] != 0 else "Inconsolata " + str(int(20*self.screen_size))
                 color = "white" if self.original_puzzle[i][j] != 0 else "black"
+
+                # Check if the algorithm is running
+                if self.collection and self.puzzle[i][j] != 0 and self.original_puzzle[i][j] == 0:
+                    x0 = self.margin + j * self.cell_dim
+                    y0 = self.margin + i * self.cell_dim
+                    x1 = (self.margin + j * self.cell_dim) + self.cell_dim
+                    y1 = (self.margin + i * self.cell_dim) + self.cell_dim
+                    
+                    # Highlight the correct cells in the algorithm
+                    if self.puzzle[i][j] == self.collection[-1][0][i][j] and self.puzzle[i][j] == self.collection[-1][0][i][j] and streak:
+                        self.game_canvas.create_rectangle(x0, y0, x1, y1, fill='green', width=0, tags="algo_filled")
+                    
+                    # Highlight the current cell in the algorithm
+                    elif i == self.collection[0][1] and j == self.collection[0][2]:
+                        streak = False
+                        self.game_canvas.create_rectangle(x0, y0, x1, y1, fill='red', width=0, tags="algo_filled")
+                    
+                    # Highlight the filled cells in the algorithm
+                    else:
+                        streak = False
+                        self.game_canvas.create_rectangle(x0, y0, x1, y1, fill='blue', width=0, tags="algo_filled")
 
                 # Highlight hint entries with gray boxes
                 if self.original_puzzle[i][j] != 0:
@@ -148,17 +182,27 @@ class gameGUI(Frame):
                     y = self.margin + i * self.cell_dim + self.cell_dim / 2
                     self.game_canvas.create_text(x, y, text=self.puzzle[i][j], tags="entries", fill=color, font=font)
         
-        # Check if there are any cell hint entries and lower them
-        if self.game_canvas.find_withtag("locked_cells") != ():
+        # Update object stacking in the canvas
+        if self.game_canvas.find_withtag("locked_cells"):
+            # Check if a cell is highlighted by the algorithm and raise the grid
+            if self.game_canvas.find_withtag("algo_filled"):
+                self.game_canvas.tag_raise("grid_thick", "algo_filled")
+                self.game_canvas.tag_raise("grid_lines", "algo_filled")
+
+            # Check if there are any cell hint entries and lower them
             self.game_canvas.tag_raise("grid_thick", "locked_cells")
             self.game_canvas.tag_raise("grid_lines", "locked_cells")
 
             # Check if a cell is highlighted and raise the highlight border
-            if self.game_canvas.find_withtag("selected_highlight") != ():
+            if self.game_canvas.find_withtag("selected_highlight"):
+                # Check if algorithm is running and raise highlight
+                if self.game_canvas.find_withtag("algo_filled"):
+                    self.game_canvas.tag_raise("selected_highlight", "algo_filled")
+                
                 self.game_canvas.tag_raise("selected_highlight", "locked_cells")
                 self.game_canvas.tag_raise("selected_highlight", "grid_lines")
                 self.game_canvas.tag_raise("selected_highlight", "grid_thick")
-
+                
     def cellClicked(self, event):
         # Extract screen coordinates when function is called from button
         if type(event) == Event:
@@ -199,7 +243,7 @@ class gameGUI(Frame):
             self.row = row
         
         # Check if settings is clicked 
-        elif self.width - self.margin < x_coor < self.width and 0 < y_coor < self.margin:
+        elif self.width - self.margin < x_coor < self.width and 0 < y_coor < self.margin and not self.collection:
             self.openSettings()
 
     def keyPressed(self, event):
@@ -258,14 +302,64 @@ class gameGUI(Frame):
         self.menu_frame.grid_rowconfigure(0, weight=1)
         self.menu_frame.grid_columnconfigure(1, weight=1)
         self.menu_frame.grid_rowconfigure(1, weight=1)
-        self.menu_frame.pack_propagate(0)
+        self.menu_frame.grid_propagate(0)
+
+    def display_algo(self):
+        # Select the earliest step in the collection and remove it from the list
+        self.puzzle = self.collection.pop(0)[0]
+
+        # Check if the algorithm still needs to go through anymore steps
+        if self.collection:
+            # Update the GUI
+            self.drawPuzzle()
+
+            # Delayed recursion for next step
+            self.after(2, self.display_algo)
+        else:
+            # Lock the puzzle in place once solved
+            self.original_puzzle = deepcopy(self.puzzle) # Subject to change
+            
+            # Update the GUI
+            self.drawPuzzle()
 
     def solveBoard(self):
-        self.puzzle = algo.solve(deepcopy(self.original_puzzle))
-        if self.puzzle:
-            self.drawPuzzle()
+        # Call the function to run the algorithm
+        self.backtrack(deepcopy(self.original_puzzle), (0, 0)) # make result to be collection in sudoku-solver.py
+        self.display_algo()
+
+        # if self.puzzle:
+        #     self.display_algo()
+        # else:
+        #     self.reset_board()
+
+    def backtrack(self, puzzle, coordinates):
+        # Split the coordinates to x and y
+        x, y = coordinates
+        # Set Base Case as the solved puzzle
+        if algo.solvedChecker(puzzle):
+            return puzzle
         else:
-            self.reset_board()
+            # Trace possible numbers for the cell
+            # Add each change to a list collection
+            if puzzle[x][y] == 0:
+                for num in range(1, algo.board_size+1):
+                    if algo.validityChecker(puzzle, x, y, num):
+                        puzzle[x][y] = num
+                        self.collection.append([deepcopy(puzzle), x, y])
+
+                        solution = self.backtrack(puzzle, algo.nextCoordinates(x, y))
+                        if solution:
+                            self.collection.append([deepcopy(puzzle), x, y])
+                            return solution
+                        
+                        puzzle[x][y] = 0
+                        self.collection.append([deepcopy(puzzle), x, y])
+                # Return false if the algorithm finds no possible number to enter
+                return False
+            # Skip the cell when it is already filled
+            else:
+                solution = self.backtrack(puzzle, algo.nextCoordinates(x, y))
+                return solution
 
     def resetBoard(self):
         self.puzzle = deepcopy(self.original_puzzle)
@@ -302,19 +396,29 @@ class gameGUI(Frame):
         self.drawPuzzle()
 
         # Create a new menu frame
-        self.enterframe = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
-        self.enterframe.pack(fill='both')
+        self.register_frame = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
+        self.register_frame.pack(fill='both')
+
+        # Create a label for instructions and warnings
+        self.prompt = Label(self.register_frame, text="Press the button when you're done", bg="white", relief='solid', width=self.width)
+        self.prompt.grid(row=0, column=0, sticky='NSEW', pady=(0, self.margin))
 
         # Add confirmation button when entry is done
-        Button(self.enterframe, text="Enter", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.enterPuzzle).pack(fill='both', pady=(0, self.margin))
+        Button(self.register_frame, text="Enter", bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.enterPuzzle).grid(row=1, column=0, sticky='NSEW', pady=(0, self.margin))
 
+        # Configure grid formatting to fit equally into the frame
+        self.register_frame.grid_columnconfigure(0, weight=2)
+        self.register_frame.grid_rowconfigure(0, weight=2)
+        self.register_frame.grid_columnconfigure(1, weight=1)
+        self.register_frame.grid_rowconfigure(1, weight=1)
         # Let the button fill the whole frame
-        self.enterframe.pack_propagate(0)
+        self.register_frame.grid_propagate(0)
 
     def enterPuzzle(self):
-        if algo.solve(deepcopy(self.puzzle)):
+        result = algo.solve(deepcopy(self.puzzle))
+        if type(result) == list:
             # Clear out the menu to make room for a new frame 
-            self.enterframe.destroy()
+            self.register_frame.destroy()
 
             # Register the player input into the puzzle
             self.original_puzzle = deepcopy(self.puzzle)
@@ -322,35 +426,39 @@ class gameGUI(Frame):
             
             # Re-intialize the menu
             self.initMenu()
+        else:
+            self.prompt.configure(text = "Invalid Input")
 
     def openSettings(self):
         # Clear out the frames to transition into settings 
         self.menu_frame.destroy()
         self.game_canvas.destroy()
+        if self.register_frame != None:
+            self.register_frame.destroy()
 
         # Declare variables to be tracked
         variable = StringVar()
         variable.set("Default")
 
         # Initialize settings frame
-        self.settingsframe = Frame(self, width=self.width, height=self.height + self.menu, bg="white")
-        self.settingsframe.pack(fill='both')
+        self.settings_frame = Frame(self, width=self.width, height=self.height + self.menu, bg="white")
+        self.settings_frame.pack(fill='both')
 
         # Create a label for the screen size option
-        Label(self.settingsframe, text="Screen Size", bg="white", font="cambria 15").pack()
+        Label(self.settings_frame, text="Screen Size", bg="white", font="cambria 15").pack()
 
         # Create the options menu for screen sizes
-        OptionMenu(self.settingsframe, variable, "Even Smaller", "Smaller", "Default", "Larger", "Even Larger", command=self.updateSettings).pack(fill='both')
+        OptionMenu(self.settings_frame, variable, "Even Smaller", "Smaller", "Default", "Larger", "Even Larger", command=self.updateSettings).pack(fill='both')
 
         # Create the button to get back to the game
-        Button(self.settingsframe, text="Register", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.closeSettings).pack()
+        Button(self.settings_frame, text="Register", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.closeSettings).pack()
 
         # Let the frame be fully filled
-        self.settingsframe.pack_propagate(0)
+        self.settings_frame.pack_propagate(0)
 
     def closeSettings(self):
         # Clear out the settings frame
-        self.settingsframe.destroy()
+        self.settings_frame.destroy()
 
         # Re-initialize the game screen
         self.initBoard()
