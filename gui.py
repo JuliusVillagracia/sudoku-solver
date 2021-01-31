@@ -93,7 +93,22 @@ class gameGUI(Frame):
         self.menu_frame.pack_propagate(0)
 
     def drawGrid(self):
-        pass
+        self.game_canvas.delete("lines")
+        for i in range(10):
+            color = "black" if i % 3 == 0 else "gray"
+            w = 3 if i % 3 == 0 else 1
+
+            x0 = self.margin + i * self.side
+            y0 = self.margin
+            x1 = self.margin + i * self.side
+            y1 = self.height - self.margin
+            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags="lines")
+
+            x0 = self.margin
+            y0 = self.margin + i * self.side
+            x1 = self.width - self.margin
+            y1 = self.margin + i * self.side
+            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags="lines")
 
     def drawPuzzle(self):
         pass
