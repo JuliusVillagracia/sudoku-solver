@@ -8,12 +8,15 @@ algo = importlib.import_module("sudoku-solver")
 
 class gameGUI(Frame):
     def __init__(self, parent):
+        # Configure board size
+        self.size = 9
+
         # Configure GUI dimensions
         self.multi = 1 # 0.8, 1, 1.2
-        self.margin = int(20 * self.multi) # Pixels around the board
-        self.side = int(50 * self.multi) # Width of every board cell.
-        self.width = self.height = self.margin * 2 + self.side * 9  # Width and height of the whole board
-        self.menu = self.margin * 2 + self.side * 2
+        self.margin = int(20 * self.multi) # Space around the board
+        self.cell_dim = int(50 * self.multi) # Dimension of every board cell.
+        self.width = self.height = self.margin * 2 + self.cell_dim * self.size  # Width and height of the whole board
+        self.menu = self.margin * 2 + self.cell_dim * 2 # Extra space for the menu
 
         # Configure parent of game frame
         self.parent = parent
@@ -93,22 +96,25 @@ class gameGUI(Frame):
         self.menu_frame.pack_propagate(0)
 
     def drawGrid(self):
-        self.game_canvas.delete("lines")
-        for i in range(10):
+        # Clear the canvas of any grid lines before drawing new ones
+        self.game_canvas.delete("grid_lines")
+        
+        # Loop and create horizontal and vertical lines across
+        for i in range(self.size + 1):
             color = "black" if i % 3 == 0 else "gray"
             w = 3 if i % 3 == 0 else 1
 
-            x0 = self.margin + i * self.side
+            x0 = self.margin + i * self.cell_dim
             y0 = self.margin
-            x1 = self.margin + i * self.side
+            x1 = self.margin + i * self.cell_dim
             y1 = self.height - self.margin
-            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags="lines")
+            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags="grid_lines")
 
             x0 = self.margin
-            y0 = self.margin + i * self.side
+            y0 = self.margin + i * self.cell_dim
             x1 = self.width - self.margin
-            y1 = self.margin + i * self.side
-            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags="lines")
+            y1 = self.margin + i * self.cell_dim
+            self.game_canvas.create_line(x0, y0, x1, y1, width=w, fill=color, tags="grid_lines")
 
     def drawPuzzle(self):
         pass
