@@ -1,5 +1,5 @@
 # Import Necessary Libraries
-from tkinter import Tk, Frame, Canvas, Button
+from tkinter import Tk, Frame, Canvas, Button, Event
 from PIL import ImageTk, Image
 from copy import deepcopy
 
@@ -149,31 +149,45 @@ class gameGUI(Frame):
                     y = self.margin + i * self.cell_dim + self.cell_dim / 2
                     self.game_canvas.create_text(x, y, text=self.puzzle[i][j], tags="entries", fill=color, font=font)
         
-        # Raise the border above the boxes
+        # Rearrange canvas components
         self.game_canvas.tag_raise("grid_thick", "locked_cells")
         self.game_canvas.tag_raise("grid_lines", "locked_cells")
+        # Check if a cell is highlighted and raise the highlight border
+        if self.game_canvas.find_withtag("selected_highlight") != ():
+            self.game_canvas.tag_raise("selected_highlight", "locked_cells")
+            self.game_canvas.tag_raise("selected_highlight", "grid_lines")
+            self.game_canvas.tag_raise("selected_highlight", "grid_thick")
 
     def cellClicked(self, event):
+        # Extract screen coordinates when function is called from button
+        if type(event) == Event:
+            x_coor = event.x
+            y_coor = event.y
+        
+        # Extract from a tuple when function is called key press
+        elif type(event) == tuple:
+            y_coor, x_coor = event
+
         # Check if the cursor is within the canvas when it clicks
-        if self.margin < event.x < self.width - self.margin and self.margin < event.y < self.height - self.margin:
+        if (type(event) == tuple) or (self.margin < x_coor < self.width - self.margin and self.margin < y_coor < self.height - self.margin):
             # Clear the canvas selection before highlighting another
             self.game_canvas.delete("selected_highlight")
             
             # Focus on the canvas for key tracking
             self.game_canvas.focus_set()
             
-            # Check which cell is selected_highlight in terms of coordinates
-            col = (event.x - self.margin) // self.cell_dim
-            row = (event.y - self.margin) // self.cell_dim
+            # Check which cell is selected_highlight in terms of coordinates unless function is called by key press in which case retain the extracted tuple
+            col = (x_coor - self.margin) // self.cell_dim if type(event) == Event else x_coor
+            row = (y_coor - self.margin) // self.cell_dim if type(event) == Event else y_coor
             
             # Check if cell clicked is already highlighted or not
             if col != self.col or row != self.row:
                 # Loop and create cell highlight borders by side 
                 for i in range(4):
-                    x0 = event.x - (event.x - self.margin) % self.cell_dim + self.cell_dim if i == 3 else event.x - (event.x - self.margin) % self.cell_dim
-                    y0 = event.y - (event.y - self.margin) % self.cell_dim + self.cell_dim if i == 2 else event.y - (event.y - self.margin) % self.cell_dim
-                    x1 = event.x - (event.x - self.margin) % self.cell_dim + self.cell_dim if i != 0 else event.x - (event.x - self.margin) % self.cell_dim
-                    y1 = event.y - (event.y - self.margin) % self.cell_dim + self.cell_dim if i != 1 else event.y - (event.y - self.margin) % self.cell_dim
+                    x0 = (self.margin + col * self.cell_dim) + self.cell_dim if i == 3 else self.margin + col * self.cell_dim
+                    y0 = (self.margin + row * self.cell_dim) + self.cell_dim if i == 2 else self.margin + row * self.cell_dim
+                    x1 = (self.margin + col * self.cell_dim) + self.cell_dim if i != 0 else self.margin + col * self.cell_dim
+                    y1 = (self.margin + row * self.cell_dim) + self.cell_dim if i != 1 else self.margin + row * self.cell_dim
                     self.game_canvas.create_line(x0, y0, x1, y1, fill="red", width=3, tags="selected_highlight")
             else:
                 # Reset cell coordinates as highlight is removed
@@ -184,11 +198,41 @@ class gameGUI(Frame):
             self.row = row
         
         # Check if settings is clicked 
-        elif self.width - self.margin < event.x < self.width and 0 < event.y < self.margin:
+        elif self.width - self.margin < x_coor < self.width and 0 < y_coor < self.margin:
             self.openSettings()
 
     def keyPressed(self, event):
-        pass
+        # Check if a character exists for the key pressed
+        if event.char != '':
+            # Check if a cell is highlighted
+            if self.row != -1 and self.col != -1:
+                # Move highlight upwards
+                if event.char == 'w' and self.row > 0:
+                    self.cellClicked((self.row-1, self.col))
+                
+                # Move highlight downwards
+                elif event.char == 's' and self.row < self.board_size-1:
+                    self.cellClicked((self.row+1, self.col))
+                
+                # Move highlight to the left
+                elif event.char == 'a' and self.col > 0:
+                    self.cellClicked((self.row, self.col-1))
+                
+                # Move highlight to the right
+                elif event.char == 'd' and self.col < self.board_size-1:
+                    self.cellClicked((self.row, self.col+1))
+
+            # Check if the key is valid
+            if self.original_puzzle[self.row][self.col] == 0:
+                # Enter the entry for a valid number
+                if event.char in "123456789":
+                    self.puzzle[self.row][self.col] = int(event.char)
+                    self.drawPuzzle()
+
+                # Remove the entry if escape and backspace is clicked
+                elif event.char in ["\x08", "\x1b"]:
+                    self.puzzle[self.row][self.col] = 0
+                    self.drawPuzzle()
 
     def initMenu(self):
         # Initialize padding across the buttons
