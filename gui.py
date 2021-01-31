@@ -260,7 +260,11 @@ class gameGUI(Frame):
         self.menu_frame.pack_propagate(0)
 
     def solveBoard(self):
-        pass
+        self.puzzle = algo.backtrack(deepcopy(self.original_puzzle), (0, 0))
+        if self.puzzle:
+            self.drawPuzzle()
+        else:
+            self.reset_board()
 
     def resetBoard(self):
         pass
