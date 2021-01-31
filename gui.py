@@ -1,5 +1,5 @@
 # Import Necessary Libraries
-from tkinter import Tk, Frame, Canvas
+from tkinter import Tk, Frame, Canvas, Button
 from PIL import ImageTk, Image
 
 # Import Other Files
@@ -49,6 +49,7 @@ class gameGUI(Frame):
 
         # Initialize Inner Frames
         self.initBoard()
+        self.initMenu()
 
     def initBoard(self):
         # Create the Game Canvas and pack it into the frame
@@ -69,6 +70,28 @@ class gameGUI(Frame):
         self.game_canvas.bind("<Button-1>", self.cellClicked)
         self.game_canvas.bind("<Key>", self.keyPressed)
     
+    def initMenu(self):
+        padding = self.margin // 2
+
+        self.menu_frame = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
+        
+        Button(self.menu_frame, text="Solve", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.solveBoard).grid(row=0, column=0, sticky='NSEW', pady=(0, padding), padx=(0, padding))
+        
+        Button(self.menu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.resetBoard).grid(row=0, column=1, sticky='NSEW', pady=(0, padding))
+        
+        Button(self.menu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.generatePuzzle).grid(row=1, column=0, sticky='NSEW', pady=(0, self.margin), padx=(0, padding))
+        
+        self.input_btn = Button(self.menu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.inputPuzzle)
+        self.input_btn.grid(row=1, column=1, sticky='NSEW', pady=(0, self.margin))
+
+        self.menu_frame.grid_columnconfigure(0, weight=1)
+        self.menu_frame.grid_rowconfigure(0, weight=1)
+        self.menu_frame.grid_columnconfigure(1, weight=1)
+        self.menu_frame.grid_rowconfigure(1, weight=1)
+
+        self.menu_frame.pack(fill='both')
+        self.menu_frame.pack_propagate(0)
+
     def drawGrid(self):
         pass
 
@@ -79,6 +102,43 @@ class gameGUI(Frame):
         pass
 
     def keyPressed(self, event):
+        pass
+
+    def initMenu(self):
+        # Initialize padding across the buttons
+        padding = self.margin // 2
+
+        # Create the Menu Frame and pack it into the frame
+        self.menu_frame = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
+        self.menu_frame.pack(fill='both')
+        
+        # Insert menu buttons into the grid and bind each with a command
+        Button(self.menu_frame, text="Solve", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.solveBoard).grid(row=0, column=0, sticky='NSEW', pady=(0, padding), padx=(0, padding))
+        
+        Button(self.menu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.resetBoard).grid(row=0, column=1, sticky='NSEW', pady=(0, padding))
+        
+        Button(self.menu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.generatePuzzle).grid(row=1, column=0, sticky='NSEW', pady=(0, self.margin), padx=(0, padding))
+        
+        self.input_btn = Button(self.menu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.inputPuzzle)
+        self.input_btn.grid(row=1, column=1, sticky='NSEW', pady=(0, self.margin))
+
+        # Configure grid formatting to fit equally into the frame
+        self.menu_frame.grid_columnconfigure(0, weight=1)
+        self.menu_frame.grid_rowconfigure(0, weight=1)
+        self.menu_frame.grid_columnconfigure(1, weight=1)
+        self.menu_frame.grid_rowconfigure(1, weight=1)
+        self.menu_frame.pack_propagate(0)
+
+    def solveBoard(self):
+        pass
+
+    def resetBoard(self):
+        pass
+
+    def generatePuzzle(self):
+        pass
+
+    def inputPuzzle(self):
         pass
 
 # Initialize root window
