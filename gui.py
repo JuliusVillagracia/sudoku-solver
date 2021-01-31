@@ -1,5 +1,6 @@
 # Import Necessary Libraries
-from tkinter import Tk, Frame
+from tkinter import Tk, Frame, Canvas
+from PIL import ImageTk, Image
 
 # Import Other Files
 import importlib  
@@ -45,6 +46,40 @@ class gameGUI(Frame):
             [0, 8, 0, 2, 0, 5, 0, 0, 0],
             [1, 0, 0, 0, 9, 0, 0, 0, 3],
             [0, 0, 9, 8, 0, 0, 0, 6, 0]]
+
+        # Initialize Inner Frames
+        self.initBoard()
+
+    def initBoard(self):
+        # Create the Game Canvas and pack it into the frame
+        self.game_canvas = Canvas(self, width=self.width, height=self.height, bg='white', highlightthickness=0)
+        self.game_canvas.pack(fill='both', side='top')
+
+        # Create Gear Icon for settings at the corner of the canvas
+        self.png = Image.open('settings.png')
+        self.png = self.png.resize((self.margin, self.margin), Image.ANTIALIAS)
+        self.img = ImageTk.PhotoImage(self.png)
+        self.game_canvas.create_image(self.width-self.margin//2, self.margin//2, image=self.img, tags='settings')
+
+        # Draw the board contents within the canvas
+        self.drawGrid()
+        self.drawPuzzle()
+
+        # Bind keys to the canvas for tracking
+        self.game_canvas.bind("<Button-1>", self.cellClicked)
+        self.game_canvas.bind("<Key>", self.keyPressed)
+    
+    def drawGrid(self):
+        pass
+
+    def drawPuzzle(self):
+        pass
+
+    def cellClicked(self, event):
+        pass
+
+    def keyPressed(self, event):
+        pass
 
 # Initialize root window
 root = Tk()
