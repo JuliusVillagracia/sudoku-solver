@@ -1,5 +1,5 @@
 # Import Necessary Libraries
-from tkinter import Tk, Frame, Canvas, Button, Event
+from tkinter import Tk, Frame, Canvas, Button, Event, Label, StringVar, OptionMenu
 from PIL import ImageTk, Image
 from copy import deepcopy
 
@@ -9,13 +9,11 @@ algo = importlib.import_module("sudoku-solver")
 
 class gameGUI(Frame):
     def __init__(self, parent):
-        # Configure board size
-        self.board_size = 9
-
         # Configure GUI dimensions
-        self.multi = 1 # 0.8, 1, 1.2
-        self.margin = int(20 * self.multi) # Space around the board
-        self.cell_dim = int(50 * self.multi) # Dimension of every board cell.
+        self.board_size = 9 # Configure board size
+        self.screen_size = 1 # Screen size
+        self.margin = int(20 * self.screen_size) # Space around the board
+        self.cell_dim = int(50 * self.screen_size) # Dimension of every board cell.
         self.width = self.height = self.margin * 2 + self.cell_dim * self.board_size  # Width and height of the whole board
         self.menu = self.margin * 2 + self.cell_dim * 2 # Extra space for the menu
 
@@ -133,7 +131,7 @@ class gameGUI(Frame):
         for i in range(self.board_size):
             for j in range(self.board_size):
                 # Differently format cell's containing hint entries
-                font = "Inconsolata " + str(int(20*self.multi)) + " bold" if self.original_puzzle[i][j] != 0 else "Inconsolata " + str(int(20*self.multi))
+                font = "Inconsolata " + str(int(20*self.screen_size)) + " bold" if self.original_puzzle[i][j] != 0 else "Inconsolata " + str(int(20*self.screen_size))
                 color = "white" if self.original_puzzle[i][j] != 0 else "black"
 
                 # Highlight hint entries with gray boxes
@@ -325,7 +323,58 @@ class gameGUI(Frame):
         self.initMenu()
 
     def openSettings(self):
-        pass
+        # Clear out the frames to transition into settings 
+        self.menu_frame.destroy()
+        self.game_canvas.destroy()
+
+        # Declare variables to be tracked
+        variable = StringVar()
+        variable.set("Default")
+
+        # Initialize settings frame
+        self.settingsframe = Frame(self, width=self.width, height=self.height + self.menu, bg="white")
+        self.settingsframe.pack(fill='both')
+
+        # Create a label for the screen size option
+        Label(self.settingsframe, text="Screen Size", bg="white", font="cambria 15").pack()
+
+        # Create the options menu for screen sizes
+        OptionMenu(self.settingsframe, variable, "Even Smaller", "Smaller", "Default", "Larger", "Even Larger", command=self.updateSettings).pack(fill='both')
+
+        # Create the button to get back to the game
+        Button(self.settingsframe, text="Register", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.closeSettings).pack()
+
+        # Let the frame be fully filled
+        self.settingsframe.pack_propagate(0)
+
+    def closeSettings(self):
+        # Clear out the settings frame
+        self.settingsframe.destroy()
+
+        # Re-initialize the game screen
+        self.initBoard()
+        self.initMenu()
+
+    def updateSettings(self, option):
+        # Update the screen size according to the option picked
+        if option == "Even Smaller":
+            self.screen_size = 0.6
+        elif option == "Smaller":
+            self.screen_size = 0.8
+        elif option == "Default":
+            self.screen_size = 1
+        elif option == "Larger":
+            self.screen_size = 1.2
+        elif option == "Even Larger":
+            self.screen_size = 1.4
+        
+        # Reconfigure GUI settings
+        self.board_size = 9
+        self.margin = int(20 * self.screen_size) # Space around the board
+        self.cell_dim = int(50 * self.screen_size) # Dimension of every board cell.
+        self.width = self.height = self.margin * 2 + self.cell_dim * self.board_size  # Width and height of the whole board
+        self.menu = self.margin * 2 + self.cell_dim * 2 # Extra space for the menu
+        root.geometry(str(self.width) + "x" + str(self.height + self.menu) + "+1000+200") # Window Size
 
 # Initialize root window
 root = Tk()
