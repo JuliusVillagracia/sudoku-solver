@@ -126,7 +126,8 @@ class gameGUI(Frame):
     def drawPuzzle(self):
         # Clear the canvas of any puzzle components before drawing new puzzle
         self.game_canvas.delete("entries")
-        self.game_canvas.delete("locked_cells")
+        if self.game_canvas.find_withtag("locked_cells") != ():
+            self.game_canvas.delete("locked_cells")
 
         # Fill in each cell with the puzzle entry from the current puzzle state
         for i in range(self.board_size):
@@ -149,14 +150,16 @@ class gameGUI(Frame):
                     y = self.margin + i * self.cell_dim + self.cell_dim / 2
                     self.game_canvas.create_text(x, y, text=self.puzzle[i][j], tags="entries", fill=color, font=font)
         
-        # Rearrange canvas components
-        self.game_canvas.tag_raise("grid_thick", "locked_cells")
-        self.game_canvas.tag_raise("grid_lines", "locked_cells")
-        # Check if a cell is highlighted and raise the highlight border
-        if self.game_canvas.find_withtag("selected_highlight") != ():
-            self.game_canvas.tag_raise("selected_highlight", "locked_cells")
-            self.game_canvas.tag_raise("selected_highlight", "grid_lines")
-            self.game_canvas.tag_raise("selected_highlight", "grid_thick")
+        # Check if there are any cell hint entries and lower them
+        if self.game_canvas.find_withtag("locked_cells") != ():
+            self.game_canvas.tag_raise("grid_thick", "locked_cells")
+            self.game_canvas.tag_raise("grid_lines", "locked_cells")
+
+            # Check if a cell is highlighted and raise the highlight border
+            if self.game_canvas.find_withtag("selected_highlight") != ():
+                self.game_canvas.tag_raise("selected_highlight", "locked_cells")
+                self.game_canvas.tag_raise("selected_highlight", "grid_lines")
+                self.game_canvas.tag_raise("selected_highlight", "grid_thick")
 
     def cellClicked(self, event):
         # Extract screen coordinates when function is called from button
@@ -222,17 +225,17 @@ class gameGUI(Frame):
                 elif event.char == 'd' and self.col < self.board_size-1:
                     self.cellClicked((self.row, self.col+1))
 
-            # Check if the key is valid
-            if self.original_puzzle[self.row][self.col] == 0:
-                # Enter the entry for a valid number
-                if event.char in "123456789":
-                    self.puzzle[self.row][self.col] = int(event.char)
-                    self.drawPuzzle()
+                # Check if the key is valid
+                if self.original_puzzle[self.row][self.col] == 0:
+                    # Enter the entry for a valid number
+                    if event.char in "123456789":
+                        self.puzzle[self.row][self.col] = int(event.char)
+                        self.drawPuzzle()
 
-                # Remove the entry if escape and backspace is clicked
-                elif event.char in ["\x08", "\x1b"]:
-                    self.puzzle[self.row][self.col] = 0
-                    self.drawPuzzle()
+                    # Remove the entry if escape and backspace is clicked
+                    elif event.char in ["\x08", "\x1b"]:
+                        self.puzzle[self.row][self.col] = 0
+                        self.drawPuzzle()
 
     def initMenu(self):
         # Initialize padding across the buttons
@@ -267,13 +270,59 @@ class gameGUI(Frame):
             self.reset_board()
 
     def resetBoard(self):
-        pass
+        self.puzzle = deepcopy(self.original_puzzle)
+        self.drawPuzzle()
 
     def generatePuzzle(self):
         pass
 
     def inputPuzzle(self):
-        pass
+        # Clear out the menu to make room for a new frame 
+        self.menu_frame.destroy()
+
+        # re-initialize the board to get it ready for input
+        self.original_puzzle = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        self.puzzle = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        self.drawPuzzle()
+
+        # Create a new menu frame
+        self.enterframe = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
+        self.enterframe.pack(fill='both')
+
+        # Add confirmation button when entry is done
+        Button(self.enterframe, text="Enter", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.enterPuzzle).pack(fill='both', pady=(0, self.margin))
+
+        # Let the button fill the whole frame
+        self.enterframe.pack_propagate(0)
+
+    def enterPuzzle(self):
+        # Clear out the menu to make room for a new frame 
+        self.enterframe.destroy()
+
+        # Register the player input into the puzzle
+        self.original_puzzle = deepcopy(self.puzzle)
+        self.drawPuzzle()
+        
+        # Re-intialize the menu
+        self.initMenu()
 
     def openSettings(self):
         pass
