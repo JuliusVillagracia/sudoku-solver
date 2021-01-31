@@ -29,7 +29,7 @@ class gameGUI(Frame):
         self.parent.resizable(0,0)
 
         # Initialize puzzle variables
-        self.row, self.col = 0, 0
+        self.row, self.col = -1, -1
         self.original_puzzle = [
             [0, 2, 0, 0, 0, 4, 3, 0, 0],
             [9, 0, 0, 0, 2, 0, 0, 0, 8],
@@ -154,7 +154,38 @@ class gameGUI(Frame):
         self.game_canvas.tag_raise("grid_lines", "locked_cells")
 
     def cellClicked(self, event):
-        pass
+        # Check if the cursor is within the canvas when it clicks
+        if self.margin < event.x < self.width - self.margin and self.margin < event.y < self.height - self.margin:
+            # Clear the canvas selection before highlighting another
+            self.game_canvas.delete("selected_highlight")
+            
+            # Focus on the canvas for key tracking
+            self.game_canvas.focus_set()
+            
+            # Check which cell is selected_highlight in terms of coordinates
+            col = (event.x - self.margin) // self.cell_dim
+            row = (event.y - self.margin) // self.cell_dim
+            
+            # Check if cell clicked is already highlighted or not
+            if col != self.col or row != self.row:
+                # Loop and create cell highlight borders by side 
+                for i in range(4):
+                    x0 = event.x - (event.x - self.margin) % self.cell_dim + self.cell_dim if i == 3 else event.x - (event.x - self.margin) % self.cell_dim
+                    y0 = event.y - (event.y - self.margin) % self.cell_dim + self.cell_dim if i == 2 else event.y - (event.y - self.margin) % self.cell_dim
+                    x1 = event.x - (event.x - self.margin) % self.cell_dim + self.cell_dim if i != 0 else event.x - (event.x - self.margin) % self.cell_dim
+                    y1 = event.y - (event.y - self.margin) % self.cell_dim + self.cell_dim if i != 1 else event.y - (event.y - self.margin) % self.cell_dim
+                    self.game_canvas.create_line(x0, y0, x1, y1, fill="red", width=3, tags="selected_highlight")
+            else:
+                # Reset cell coordinates as highlight is removed
+                col = row = -1
+
+            # Update the coordinates of the highlighted cell
+            self.col = col
+            self.row = row
+        
+        # Check if settings is clicked 
+        elif self.width - self.margin < event.x < self.width and 0 < event.y < self.margin:
+            self.openSettings()
 
     def keyPressed(self, event):
         pass
@@ -194,6 +225,9 @@ class gameGUI(Frame):
         pass
 
     def inputPuzzle(self):
+        pass
+
+    def openSettings(self):
         pass
 
 # Initialize root window
