@@ -29,6 +29,9 @@ Solution:
 ]
 '''
 
+# The easy puzzles contain 35-45 given numbers, 
+# while the hardest all contain about 25-26.
+
 def printBoard(puzzle):
     # Print Readable Board On Terminal
     for row in range(board_size):
@@ -96,12 +99,12 @@ def backtrack(puzzle, coordinates):
             return solution
 
 # Print results in the terminal
-print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
-printBoard(puzzle)
+# print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
+# printBoard(puzzle)
 
-print("\n~ ~ ~ SOLVED ~ ~ ~\n")
-answer = backtrack(puzzle, (0, 0))
-if answer:
-    printBoard(answer)
-else:
-    print("[!] The sudoku board has no solutions")
+# print("\n~ ~ ~ SOLVED ~ ~ ~\n")
+# answer = backtrack(puzzle, (0, 0))
+# if answer:
+#     printBoard(answer)
+# else:
+#     print("[!] The sudoku board has no solutions")
