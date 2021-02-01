@@ -50,6 +50,7 @@ class gameGUI(Frame):
             [1, 0, 0, 0, 9, 0, 0, 0, 3],
             [0, 0, 9, 8, 0, 0, 0, 6, 0]]
         self.collection = []
+        self.timer = False
 
         # Initialize Frames
         self.game_canvas = None
@@ -81,26 +82,28 @@ class gameGUI(Frame):
         self.game_canvas.bind("<Key>", self.keyPressed)
     
     def initMenu(self):
+        # Initialize padding across the buttons
         padding = self.margin // 2
 
+        # Create the Menu Frame and pack it into the frame
         self.menu_frame = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
+        self.menu_frame.pack(fill='both')
         
+        # Insert menu buttons into the grid and bind each with a command
         Button(self.menu_frame, text="Solve", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.solveBoard).grid(row=0, column=0, sticky='NSEW', pady=(0, padding), padx=(0, padding))
         
         Button(self.menu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.resetBoard).grid(row=0, column=1, sticky='NSEW', pady=(0, padding))
         
         Button(self.menu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.generatePuzzle).grid(row=1, column=0, sticky='NSEW', pady=(0, self.margin), padx=(0, padding))
         
-        self.input_btn = Button(self.menu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.inputPuzzle)
-        self.input_btn.grid(row=1, column=1, sticky='NSEW', pady=(0, self.margin))
+        Button(self.menu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.inputPuzzle).grid(row=1, column=1, sticky='NSEW', pady=(0, self.margin))
 
+        # Configure grid formatting to fit equally into the frame
         self.menu_frame.grid_columnconfigure(0, weight=1)
         self.menu_frame.grid_rowconfigure(0, weight=1)
         self.menu_frame.grid_columnconfigure(1, weight=1)
         self.menu_frame.grid_rowconfigure(1, weight=1)
-
-        self.menu_frame.pack(fill='both')
-        self.menu_frame.pack_propagate(0)
+        self.menu_frame.grid_propagate(0)
 
     def drawGrid(self):
         # Clear the canvas of any grid lines before drawing new ones
@@ -184,24 +187,13 @@ class gameGUI(Frame):
         
         # Update object stacking in the canvas
         if self.game_canvas.find_withtag("locked_cells"):
-            # Check if a cell is highlighted by the algorithm and raise the grid
-            if self.game_canvas.find_withtag("algo_filled"):
-                self.game_canvas.tag_raise("grid_thick", "algo_filled")
-                self.game_canvas.tag_raise("grid_lines", "algo_filled")
-
-            # Check if there are any cell hint entries and lower them
-            self.game_canvas.tag_raise("grid_thick", "locked_cells")
-            self.game_canvas.tag_raise("grid_lines", "locked_cells")
+            # Raise the priority of the grid
+            self.game_canvas.tag_raise("grid_lines")
+            self.game_canvas.tag_raise("grid_thick")
 
             # Check if a cell is highlighted and raise the highlight border
             if self.game_canvas.find_withtag("selected_highlight"):
-                # Check if algorithm is running and raise highlight
-                if self.game_canvas.find_withtag("algo_filled"):
-                    self.game_canvas.tag_raise("selected_highlight", "algo_filled")
-                
-                self.game_canvas.tag_raise("selected_highlight", "locked_cells")
-                self.game_canvas.tag_raise("selected_highlight", "grid_lines")
-                self.game_canvas.tag_raise("selected_highlight", "grid_thick")
+                self.game_canvas.tag_raise("selected_highlight")
                 
     def cellClicked(self, event):
         # Extract screen coordinates when function is called from button
@@ -278,31 +270,6 @@ class gameGUI(Frame):
                     elif event.char in ["\x08", "\x1b"]:
                         self.puzzle[self.row][self.col] = 0
                         self.drawPuzzle()
-
-    def initMenu(self):
-        # Initialize padding across the buttons
-        padding = self.margin // 2
-
-        # Create the Menu Frame and pack it into the frame
-        self.menu_frame = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
-        self.menu_frame.pack(fill='both')
-        
-        # Insert menu buttons into the grid and bind each with a command
-        Button(self.menu_frame, text="Solve", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.solveBoard).grid(row=0, column=0, sticky='NSEW', pady=(0, padding), padx=(0, padding))
-        
-        Button(self.menu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.resetBoard).grid(row=0, column=1, sticky='NSEW', pady=(0, padding))
-        
-        Button(self.menu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.generatePuzzle).grid(row=1, column=0, sticky='NSEW', pady=(0, self.margin), padx=(0, padding))
-        
-        self.input_btn = Button(self.menu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.inputPuzzle)
-        self.input_btn.grid(row=1, column=1, sticky='NSEW', pady=(0, self.margin))
-
-        # Configure grid formatting to fit equally into the frame
-        self.menu_frame.grid_columnconfigure(0, weight=1)
-        self.menu_frame.grid_rowconfigure(0, weight=1)
-        self.menu_frame.grid_columnconfigure(1, weight=1)
-        self.menu_frame.grid_rowconfigure(1, weight=1)
-        self.menu_frame.grid_propagate(0)
 
     def display_algo(self):
         # Select the earliest step in the collection and remove it from the list
