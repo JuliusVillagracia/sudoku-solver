@@ -29,28 +29,38 @@ class gameGUI(Frame):
 
         # Initialize puzzle variables
         self.row, self.col = -1, -1
+        # self.puzzle = [
+        #     [0, 2, 0, 0, 0, 4, 3, 0, 0],
+        #     [9, 0, 0, 0, 2, 0, 0, 0, 8],
+        #     [0, 0, 0, 6, 0, 9, 0, 5, 0],
+        #     [0, 0, 0, 0, 0, 0, 0, 0, 1],
+        #     [0, 7, 2, 5, 0, 3, 6, 8, 0],
+        #     [6, 0, 0, 0, 0, 0, 0, 0, 0],
+        #     [0, 8, 0, 2, 0, 5, 0, 0, 0],
+        #     [1, 0, 0, 0, 9, 0, 0, 0, 3],
+        #     [0, 0, 9, 8, 0, 0, 0, 6, 0]]
         self.original_puzzle = [
-            [0, 2, 0, 0, 0, 4, 3, 0, 0],
-            [9, 0, 0, 0, 2, 0, 0, 0, 8],
-            [0, 0, 0, 6, 0, 9, 0, 5, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 7, 2, 5, 0, 3, 6, 8, 0],
-            [6, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 8, 0, 2, 0, 5, 0, 0, 0],
-            [1, 0, 0, 0, 9, 0, 0, 0, 3],
-            [0, 0, 9, 8, 0, 0, 0, 6, 0]]
+            [1, 2, 3, 0, 0, 0, 0, 0, 0],
+            [4, 5, 6, 0, 0, 0, 0, 0, 0],
+            [7, 8, 9, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0]]
         self.puzzle = [
-            [0, 2, 0, 0, 0, 4, 3, 0, 0],
-            [9, 0, 0, 0, 2, 0, 0, 0, 8],
-            [0, 0, 0, 6, 0, 9, 0, 5, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 7, 2, 5, 0, 3, 6, 8, 0],
-            [6, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 8, 0, 2, 0, 5, 0, 0, 0],
-            [1, 0, 0, 0, 9, 0, 0, 0, 3],
-            [0, 0, 9, 8, 0, 0, 0, 6, 0]]
+            [1, 2, 3, 0, 0, 0, 0, 0, 0],
+            [4, 5, 6, 0, 0, 0, 0, 0, 0],
+            [7, 8, 9, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0]]
         self.collection = []
-        self.timer = {"Hour": 0, "Minute": 0, "Second": 0} 
+        self.timer = {"Hour": 0, "Minute": 0, "Second": 0, "Millisecond": 0, "Pause": False}
 
         # Initialize Frames
         self.game_canvas = None
@@ -92,6 +102,8 @@ class gameGUI(Frame):
         # Create a label for the timer
         self.time_label = Label(self.menu_frame, text="{:0>2d}h {:0>2d}m {:0>2d}s".format(self.timer["Hour"], self.timer["Minute"], self.timer["Second"]), bg="white", relief='solid', height=self.margin, width=(self.width-self.margin)//2)
         self.time_label.grid(row=0, column=0, columnspan=2, sticky='NSEW', pady=(0, padding))
+
+        # Start-up the timer
         self.updateTimer()
         
         # Insert menu buttons into the grid and bind each with a command
@@ -113,17 +125,26 @@ class gameGUI(Frame):
         self.menu_frame.grid_propagate(0)
 
     def updateTimer(self):
-        if self.menu_frame:
-            if self.timer["Minute"] == 60:
+        # Cap the clock to update only when the menu_frame is visible 
+        if self.menu_frame and not self.timer["Pause"]:
+            # Update the timer variable
+            if self.timer["Minute"] == 59:
                 self.timer["Hour"] += 1
-            elif self.timer["Second"] == 60:
+                self.timer["Minute"] = 0
+            elif self.timer["Second"] == 59:
+                self.timer["Minute"] += 1
+                self.timer["Second"] = 0
+            elif self.timer["Millisecond"] == 990:
                 self.timer["Second"] += 1
+                self.timer["Millisecond"] = 0
             else:
-                self.timer["Second"] += 1
+                self.timer["Millisecond"] += 10
 
+            # Update the timer label in the menu_frame
             self.time_label.configure(text="{:0>2d}h {:0>2d}m {:0>2d}s".format(self.timer["Hour"], self.timer["Minute"], self.timer["Second"]))
 
-            self.after(1000, self.updateTimer)
+            # Recurce the clock to update every second
+            self.after(10, self.updateTimer)
 
     def drawGrid(self):
         # Clear the canvas of any grid lines before drawing new ones
@@ -184,7 +205,7 @@ class gameGUI(Frame):
                     # Highlight the current cell in the algorithm
                     elif i == self.collection[0][1] and j == self.collection[0][2]:
                         streak = False
-                        self.game_canvas.create_rectangle(x0, y0, x1, y1, fill='red', width=0, tags="algo_filled")
+                        self.game_canvas.create_rectangle(x0, y0, x1, y1, fill='red', width=0, tags="algo_current")
                     
                     # Highlight the filled cells in the algorithm
                     else:
@@ -214,7 +235,7 @@ class gameGUI(Frame):
             # Check if a cell is highlighted and raise the highlight border
             if self.game_canvas.find_withtag("selected_highlight"):
                 self.game_canvas.tag_raise("selected_highlight")
-                
+
     def cellClicked(self, event):
         # Extract screen coordinates when function is called from button
         if type(event) == Event:
@@ -302,14 +323,18 @@ class gameGUI(Frame):
 
             # Delayed recursion for next step
             self.after(2, self.display_algo)
-        else:
-            # Lock the puzzle in place once solved
+        else:# Lock the puzzle in place once solved
             self.original_puzzle = deepcopy(self.puzzle) # Subject to change
             
+            self.timer = {"Hour": 0, "Minute": 0, "Second": 0, "Millisecond": 0, "Pause": True}
+
             # Update the GUI
             self.drawPuzzle()
 
     def solveBoard(self):
+        # Reset timer for tracking
+        self.timer = {"Hour": 0, "Minute": 0, "Second": 0, "Millisecond": 0, "Pause": False}
+        
         # Call the function to run the algorithm
         self.backtrack(deepcopy(self.original_puzzle), (0, 0)) # make result to be collection in sudoku-solver.py
         self.display_algo()
@@ -349,7 +374,11 @@ class gameGUI(Frame):
                 return solution
 
     def resetBoard(self):
+        # Reset game variables
         self.puzzle = deepcopy(self.original_puzzle)
+        self.timer = {"Hour": 0, "Minute": 0, "Second": 0, "Millisecond": 0, "Pause": False}
+        
+        # Update the GUI
         self.drawPuzzle()
 
     def generatePuzzle(self):
@@ -382,6 +411,7 @@ class gameGUI(Frame):
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0]]
         self.drawPuzzle()
+        self.timer = {"Hour": 0, "Minute": 0, "Second": 0, "Millisecond": 0, "Pause": False}
 
         # Create a new menu frame
         self.register_frame = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
@@ -419,6 +449,9 @@ class gameGUI(Frame):
             self.prompt.configure(text = "Invalid Input")
 
     def openSettings(self):
+        # Pause the timer
+        self.timer["Pause"] = True
+
         # Clear out the frames to transition into settings 
         self.menu_frame.destroy()
         self.menu_frame = None
@@ -449,6 +482,9 @@ class gameGUI(Frame):
         self.settings_frame.pack_propagate(0)
 
     def closeSettings(self):
+        # Restart the timer
+        self.timer["Pause"] = False
+
         # Clear out the settings frame
         self.settings_frame.destroy()
         self.settings_frame = None
