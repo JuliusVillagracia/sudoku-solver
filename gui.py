@@ -29,37 +29,27 @@ class gameGUI(Frame):
 
         # Initialize puzzle variables
         self.row, self.col = -1, -1
-        # self.puzzle = [
-        #     [0, 2, 0, 0, 0, 4, 3, 0, 0],
-        #     [9, 0, 0, 0, 2, 0, 0, 0, 8],
-        #     [0, 0, 0, 6, 0, 9, 0, 5, 0],
-        #     [0, 0, 0, 0, 0, 0, 0, 0, 1],
-        #     [0, 7, 2, 5, 0, 3, 6, 8, 0],
-        #     [6, 0, 0, 0, 0, 0, 0, 0, 0],
-        #     [0, 8, 0, 2, 0, 5, 0, 0, 0],
-        #     [1, 0, 0, 0, 9, 0, 0, 0, 3],
-        #     [0, 0, 9, 8, 0, 0, 0, 6, 0]]
         self.original_puzzle = [
             [1, 2, 3, 0, 0, 0, 0, 0, 0],
             [4, 5, 6, 0, 0, 0, 0, 0, 0],
             [7, 8, 9, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+            [0, 0, 0, 1, 2, 3, 0, 0, 0],
+            [0, 0, 0, 4, 5, 6, 0, 0, 0],
+            [0, 0, 0, 7, 8, 9, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 2, 3],
+            [0, 0, 0, 0, 0, 0, 4, 5, 6],
+            [0, 0, 0, 0, 0, 0, 7, 8, 9]]
         self.puzzle = [
             [1, 2, 3, 0, 0, 0, 0, 0, 0],
             [4, 5, 6, 0, 0, 0, 0, 0, 0],
             [7, 8, 9, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0]]
-        self.collection = []
+            [0, 0, 0, 1, 2, 3, 0, 0, 0],
+            [0, 0, 0, 4, 5, 6, 0, 0, 0],
+            [0, 0, 0, 7, 8, 9, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 2, 3],
+            [0, 0, 0, 0, 0, 0, 4, 5, 6],
+            [0, 0, 0, 0, 0, 0, 7, 8, 9]]
+        self.collection = {"Solution": None, "Moves": []}
         self.timer = {"Hour": 0, "Minute": 0, "Second": 0, "Millisecond": 0, "Pause": False}
 
         # Initialize Frames
@@ -192,18 +182,18 @@ class gameGUI(Frame):
                 color = "white" if self.original_puzzle[i][j] != 0 else "black"
 
                 # Check if the algorithm is running
-                if self.collection and self.puzzle[i][j] != 0 and self.original_puzzle[i][j] == 0:
+                if self.collection["Moves"] and self.puzzle[i][j] != 0 and self.original_puzzle[i][j] == 0:
                     x0 = self.margin + j * self.cell_dim
                     y0 = self.margin + i * self.cell_dim
                     x1 = (self.margin + j * self.cell_dim) + self.cell_dim
                     y1 = (self.margin + i * self.cell_dim) + self.cell_dim
-                    
+
                     # Highlight the correct cells in the algorithm
-                    if self.puzzle[i][j] == self.collection[-1][0][i][j] and self.puzzle[i][j] == self.collection[-1][0][i][j] and streak:
+                    if self.puzzle[i][j] == self.collection["Solution"][i][j] and streak:
                         self.game_canvas.create_rectangle(x0, y0, x1, y1, fill='green', width=0, tags="algo_filled")
                     
                     # Highlight the current cell in the algorithm
-                    elif i == self.collection[0][1] and j == self.collection[0][2]:
+                    elif i == self.collection["Moves"][0][0] and j == self.collection["Moves"][0][1]:
                         streak = False
                         self.game_canvas.create_rectangle(x0, y0, x1, y1, fill='red', width=0, tags="algo_current")
                     
@@ -280,44 +270,43 @@ class gameGUI(Frame):
             self.openSettings()
 
     def keyPressed(self, event):
-        # Check if a character exists for the key pressed
-        if event.char != '':
-            # Check if a cell is highlighted
-            if self.row != -1 and self.col != -1:
-                # Move highlight upwards
-                if event.char == 'w' and self.row > 0:
-                    self.cellClicked((self.row-1, self.col))
-                
-                # Move highlight downwards
-                elif event.char == 's' and self.row < self.board_size-1:
-                    self.cellClicked((self.row+1, self.col))
-                
-                # Move highlight to the left
-                elif event.char == 'a' and self.col > 0:
-                    self.cellClicked((self.row, self.col-1))
-                
-                # Move highlight to the right
-                elif event.char == 'd' and self.col < self.board_size-1:
-                    self.cellClicked((self.row, self.col+1))
+        # Check if a cell is highlighted
+        if self.row != -1 and self.col != -1:
+            # Move highlight upwards
+            if event.keysym in ['Up', 'w'] and self.row > 0:
+                self.cellClicked((self.row-1, self.col))
+            
+            # Move highlight downwards
+            elif event.keysym in ['Down', 's'] and self.row < self.board_size-1:
+                self.cellClicked((self.row+1, self.col))
+            
+            # Move highlight to the left
+            elif event.keysym in ['Left', 'a'] and self.col > 0:
+                self.cellClicked((self.row, self.col-1))
+            
+            # Move highlight to the right
+            elif event.keysym in ['Right', 'd'] and self.col < self.board_size-1:
+                self.cellClicked((self.row, self.col+1))
 
-                # Check if the key is valid
-                if self.original_puzzle[self.row][self.col] == 0:
-                    # Enter the entry for a valid number
-                    if event.char in "123456789":
-                        self.puzzle[self.row][self.col] = int(event.char)
-                        self.drawPuzzle()
+            # Check if the key is valid
+            if self.original_puzzle[self.row][self.col] == 0:
+                # Enter the entry for a valid number
+                if event.keysym in "123456789":
+                    self.puzzle[self.row][self.col] = int(event.char)
+                    self.drawPuzzle()
 
-                    # Remove the entry if escape and backspace is clicked
-                    elif event.char in ["\x08", "\x1b"]:
-                        self.puzzle[self.row][self.col] = 0
-                        self.drawPuzzle()
+                # Remove the entry if escape and backspace is clicked
+                elif event.keysym in ["Delete", "Escape", "BackSpace"]:
+                    self.puzzle[self.row][self.col] = 0
+                    self.drawPuzzle()
 
     def display_algo(self):
         # Select the earliest step in the collection and remove it from the list
-        self.puzzle = self.collection.pop(0)[0]
+        self.puzzle[ self.collection["Moves"][0][0] ][ self.collection["Moves"][0][1] ] = self.collection["Moves"][0][2]
+        self.collection["Moves"].pop(0)[0]
 
         # Check if the algorithm still needs to go through anymore steps
-        if self.collection:
+        if self.collection["Moves"]:
             # Update the GUI
             self.drawPuzzle()
 
@@ -336,42 +325,8 @@ class gameGUI(Frame):
         self.timer = {"Hour": 0, "Minute": 0, "Second": 0, "Millisecond": 0, "Pause": False}
         
         # Call the function to run the algorithm
-        self.backtrack(deepcopy(self.original_puzzle), (0, 0)) # make result to be collection in sudoku-solver.py
+        self.collection = algo.backtrack(deepcopy(self.original_puzzle)) # make result to be collection in sudoku-solver.py
         self.display_algo()
-
-        # if self.puzzle:
-        #     self.display_algo()
-        # else:
-        #     self.reset_board()
-
-    def backtrack(self, puzzle, coordinates):
-        # Split the coordinates to x and y
-        x, y = coordinates
-        # Set Base Case as the solved puzzle
-        if algo.solvedChecker(puzzle):
-            return puzzle
-        else:
-            # Trace possible numbers for the cell
-            # Add each change to a list collection
-            if puzzle[x][y] == 0:
-                for num in range(1, algo.board_size+1):
-                    if algo.validityChecker(puzzle, x, y, num):
-                        puzzle[x][y] = num
-                        self.collection.append([deepcopy(puzzle), x, y])
-
-                        solution = self.backtrack(puzzle, algo.nextCoordinates(x, y))
-                        if solution:
-                            self.collection.append([deepcopy(puzzle), x, y])
-                            return solution
-                        
-                        puzzle[x][y] = 0
-                        self.collection.append([deepcopy(puzzle), x, y])
-                # Return false if the algorithm finds no possible number to enter
-                return False
-            # Skip the cell when it is already filled
-            else:
-                solution = self.backtrack(puzzle, algo.nextCoordinates(x, y))
-                return solution
 
     def resetBoard(self):
         # Reset game variables
@@ -433,8 +388,8 @@ class gameGUI(Frame):
         self.register_frame.grid_propagate(0)
 
     def enterPuzzle(self):
-        result = algo.solve(deepcopy(self.puzzle))
-        if type(result) == list:
+        result = algo.initialValidation(self.puzzle)
+        if type(result) != str:
             # Clear out the menu to make room for a new frame 
             self.register_frame.destroy()
             self.register_frame = None
@@ -446,7 +401,7 @@ class gameGUI(Frame):
             # Re-intialize the menu
             self.initMenu()
         else:
-            self.prompt.configure(text = "Invalid Input")
+            self.prompt.configure(text=result)
 
     def openSettings(self):
         # Pause the timer

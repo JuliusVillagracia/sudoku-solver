@@ -8,7 +8,7 @@ puzzle = [
     [0, 0, 0, 6, 0, 9, 0, 5, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1],
     [0, 7, 2, 5, 0, 3, 6, 8, 0],
-    [6, 0, 0, 0, 5, 0, 0, 0, 0],
+    [6, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 8, 0, 2, 0, 0, 0, 0, 0],
     [1, 0, 0, 0, 9, 0, 0, 0, 3],
     [0, 0, 9, 8, 0, 0, 0, 6, 0]
@@ -75,30 +75,36 @@ def nextCoordinates(x, y):
     else:
         return x, y + 1 
 
-def backtrack(puzzle, coordinates):
+def backtrack(puzzle, coordinates=(0,0), moves=[]):
     # Split the coordinates to x and y
     x, y = coordinates
     # Set Base Case as the solved puzzle
     if solvedChecker(puzzle):
-        return puzzle
+        return {"Solution": puzzle, "Moves": moves}
     else:
         # Trace possible numbers for the cell
         if puzzle[x][y] == 0:
             for num in range(1, board_size+1):
                 if validityChecker(puzzle, x, y, num):
+                    # Try the valid number and update the moves list
                     puzzle[x][y] = num
-                    solution = backtrack(puzzle, nextCoordinates(x, y))
+                    moves.append([x, y, num])
+                    # Recurse backtrack while passing the next coordinates and the current moves list
+                    solution = backtrack(puzzle, coordinates=nextCoordinates(x, y), moves=moves)
+                    # Return the found solution board and update moves list
                     if solution:
                         return solution
+                    # Reset the invalid and update the moves list
                     puzzle[x][y] = 0
+                    moves.append([x, y, 0])
             # Return false if the algorithm finds no possible number to enter
             return False
         # Skip the cell when it is already filled
         else:
-            solution = backtrack(puzzle, nextCoordinates(x, y))
+            solution = backtrack(puzzle, coordinates=nextCoordinates(x, y), moves=moves)
             return solution
 
-def solve(puzzle):
+def initialValidation(puzzle):
     # Initialize variables for tracking
     check_col = []
     check_sub = []
@@ -119,8 +125,7 @@ def solve(puzzle):
                 for num in range(1, board_size+1):
                     # Check sub matrices
                     if check_sub.count(num) > 1:
-                        return False
-                        # return "Invalid Repeat at sub matrix " + str(x // sub_size) + ' ' + str(y // sub_size) + " of num " + str(num)
+                        return "[ ! ] " + str(num) + " was repeated repeatedly across sub matrix (" + str(x // sub_size) + ", " + str(y // sub_size) + ")"
 
                 # Reset Tracker
                 check_sub = []
@@ -129,27 +134,24 @@ def solve(puzzle):
         for num in range(1, board_size+1):
             # Check rows
             if puzzle[x].count(num) > 1:
-                return False
-                # return "Invalid Repeat at row " + str(x) + " of num " + str(num)
+                return "[ ! ] " + str(num) + " was repeated repeatedly across row " + str(x)
+                
             # Check columns
             if check_col.count(num) > 1:
-                return False
-                # return "Invalid Repeat at col " + str(x) + " of num " + str(num)
+                return "[ ! ] " + str(num) + " was repeated repeatedly across column " + str(x)
 
         # Reset Tracker
         check_col = []
-
-    # Once validity is confirmed, run the backtracking algorithm
-    return backtrack(puzzle, (0, 0))
 
 # Print results in the terminasl
 # print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
 # printBoard(puzzle)
 
 # print("\n~ ~ ~ SOLVED ~ ~ ~\n")
-# answer = solve(puzzle)
-# print(answer)
-# if answer:
-#     printBoard(answer)
+# answer = initialValidation(puzzle)
+# print('ANS: ', answer, end='\n\n')
+# if not answer:
+#     printBoard(backtrack(puzzle)["Solution"])
+#     print(len(backtrack(puzzle)["Moves"]))
 # else:
 #     print("[!] The sudoku board has no solutions")
