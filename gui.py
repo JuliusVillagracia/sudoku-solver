@@ -50,7 +50,7 @@ class gameGUI(Frame):
             [1, 0, 0, 0, 9, 0, 0, 0, 3],
             [0, 0, 9, 8, 0, 0, 0, 6, 0]]
         self.collection = []
-        self.timer = False
+        self.timer = {"Hour": 0, "Minute": 0, "Second": 0} 
 
         # Initialize Frames
         self.game_canvas = None
@@ -88,22 +88,42 @@ class gameGUI(Frame):
         # Create the Menu Frame and pack it into the frame
         self.menu_frame = Frame(self, width=self.width, height=self.menu, padx=self.margin, bg="white")
         self.menu_frame.pack(fill='both')
+
+        # Create a label for the timer
+        self.time_label = Label(self.menu_frame, text="{:0>2d}h {:0>2d}m {:0>2d}s".format(self.timer["Hour"], self.timer["Minute"], self.timer["Second"]), bg="white", relief='solid', height=self.margin, width=(self.width-self.margin)//2)
+        self.time_label.grid(row=0, column=0, columnspan=2, sticky='NSEW', pady=(0, padding))
+        self.updateTimer()
         
         # Insert menu buttons into the grid and bind each with a command
-        Button(self.menu_frame, text="Solve", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.solveBoard).grid(row=0, column=0, sticky='NSEW', pady=(0, padding), padx=(0, padding))
+        Button(self.menu_frame, text="Solve", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.solveBoard).grid(row=1, column=0, sticky='NSEW', pady=(0, padding), padx=(0, padding))
         
-        Button(self.menu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.resetBoard).grid(row=0, column=1, sticky='NSEW', pady=(0, padding))
+        Button(self.menu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.resetBoard).grid(row=1, column=1, sticky='NSEW', pady=(0, padding))
         
-        Button(self.menu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.generatePuzzle).grid(row=1, column=0, sticky='NSEW', pady=(0, self.margin), padx=(0, padding))
+        Button(self.menu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.generatePuzzle).grid(row=2, column=0, sticky='NSEW', pady=(0, self.margin), padx=(0, padding))
         
-        Button(self.menu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.inputPuzzle).grid(row=1, column=1, sticky='NSEW', pady=(0, self.margin))
+        Button(self.menu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.inputPuzzle).grid(row=2, column=1, sticky='NSEW', pady=(0, self.margin))
 
         # Configure grid formatting to fit equally into the frame
         self.menu_frame.grid_columnconfigure(0, weight=1)
         self.menu_frame.grid_rowconfigure(0, weight=1)
         self.menu_frame.grid_columnconfigure(1, weight=1)
         self.menu_frame.grid_rowconfigure(1, weight=1)
+        self.menu_frame.grid_columnconfigure(2, weight=1)
+        self.menu_frame.grid_rowconfigure(2, weight=1)
         self.menu_frame.grid_propagate(0)
+
+    def updateTimer(self):
+        if self.menu_frame:
+            if self.timer["Minute"] == 60:
+                self.timer["Hour"] += 1
+            elif self.timer["Second"] == 60:
+                self.timer["Second"] += 1
+            else:
+                self.timer["Second"] += 1
+
+            self.time_label.configure(text="{:0>2d}h {:0>2d}m {:0>2d}s".format(self.timer["Hour"], self.timer["Minute"], self.timer["Second"]))
+
+            self.after(1000, self.updateTimer)
 
     def drawGrid(self):
         # Clear the canvas of any grid lines before drawing new ones
@@ -338,6 +358,7 @@ class gameGUI(Frame):
     def inputPuzzle(self):
         # Clear out the menu to make room for a new frame 
         self.menu_frame.destroy()
+        self.menu_frame = None
 
         # re-initialize the board to get it ready for input
         self.original_puzzle = [
@@ -386,6 +407,7 @@ class gameGUI(Frame):
         if type(result) == list:
             # Clear out the menu to make room for a new frame 
             self.register_frame.destroy()
+            self.register_frame = None
 
             # Register the player input into the puzzle
             self.original_puzzle = deepcopy(self.puzzle)
@@ -399,9 +421,12 @@ class gameGUI(Frame):
     def openSettings(self):
         # Clear out the frames to transition into settings 
         self.menu_frame.destroy()
+        self.menu_frame = None
         self.game_canvas.destroy()
+        self.game_canvas = None
         if self.register_frame != None:
             self.register_frame.destroy()
+            self.register_frame = None
 
         # Declare variables to be tracked
         variable = StringVar()
@@ -426,6 +451,7 @@ class gameGUI(Frame):
     def closeSettings(self):
         # Clear out the settings frame
         self.settings_frame.destroy()
+        self.settings_frame = None
 
         # Re-initialize the game screen
         self.initBoard()
