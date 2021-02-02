@@ -29,13 +29,14 @@ Solution:
 ]
 '''
 
-# The easy puzzles contain 35-45 given numbers, 
+# The easy puzzles contain 35-45 given numbers,
 # while the hardest all contain about 25-26.
+
 
 def printBoard(puzzle):
     # Print Readable Board On Terminal
     for row in range(board_size):
-        if row != 0 and row%sub_size == 0:
+        if row != 0 and row % sub_size == 0:
             print("- "*11)
         for col in range(board_size):
             if col in [3, 6]:
@@ -43,12 +44,14 @@ def printBoard(puzzle):
             print(puzzle[row][col], end=' ')
         print()
 
-def solvedChecker(puzzle):
+
+def completeChecker(puzzle):
     # Check if the puzzle has been populated completely
     for row in range(board_size):
         if 0 in puzzle[row]:
             return False
     return True
+
 
 def validityChecker(puzzle, x, y, num):
     # Check the validity horizontally
@@ -68,18 +71,20 @@ def validityChecker(puzzle, x, y, num):
                 return False
     return True
 
+
 def nextCoordinates(x, y):
     # Check if out of bounds then iterate coordinates
     if y == board_size-1:
         return x + 1, 0
     else:
-        return x, y + 1 
+        return x, y + 1
 
-def backtrack(puzzle, coordinates=(0,0), moves=[]):
+
+def backtrack(puzzle, coordinates=(0, 0), moves=[]):
     # Split the coordinates to x and y
     x, y = coordinates
     # Set Base Case as the solved puzzle
-    if solvedChecker(puzzle):
+    if completeChecker(puzzle) and not boardValidation(puzzle):
         return {"Solution": puzzle, "Moves": moves}
     else:
         # Trace possible numbers for the cell
@@ -90,7 +95,8 @@ def backtrack(puzzle, coordinates=(0,0), moves=[]):
                     puzzle[x][y] = num
                     moves.append([x, y, num])
                     # Recurse backtrack while passing the next coordinates and the current moves list
-                    solution = backtrack(puzzle, coordinates=nextCoordinates(x, y), moves=moves)
+                    solution = backtrack(
+                        puzzle, coordinates=nextCoordinates(x, y), moves=moves)
                     # Return the found solution board and update moves list
                     if solution:
                         return solution
@@ -101,10 +107,12 @@ def backtrack(puzzle, coordinates=(0,0), moves=[]):
             return False
         # Skip the cell when it is already filled
         else:
-            solution = backtrack(puzzle, coordinates=nextCoordinates(x, y), moves=moves)
+            solution = backtrack(
+                puzzle, coordinates=nextCoordinates(x, y), moves=moves)
             return solution
 
-def initialValidation(puzzle):
+
+def boardValidation(puzzle):
     # Initialize variables for tracking
     check_col = []
     check_sub = []
@@ -119,7 +127,8 @@ def initialValidation(puzzle):
             if x % sub_size == 0 and y % sub_size == 0:
                 for row2 in range(sub_size):
                     for col2 in range(sub_size):
-                        check_sub.append(puzzle[sub_size * (x // sub_size) + row2][sub_size * (y // sub_size) + col2])
+                        check_sub.append(
+                            puzzle[sub_size * (x // sub_size) + row2][sub_size * (y // sub_size) + col2])
 
                 # Loop through all possible entries for counting
                 for num in range(1, board_size+1):
@@ -135,7 +144,7 @@ def initialValidation(puzzle):
             # Check rows
             if puzzle[x].count(num) > 1:
                 return "[ ! ] " + str(num) + " was repeated repeatedly across row " + str(x)
-                
+
             # Check columns
             if check_col.count(num) > 1:
                 return "[ ! ] " + str(num) + " was repeated repeatedly across column " + str(x)
