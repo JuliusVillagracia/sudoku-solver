@@ -486,13 +486,14 @@ class GameGUI(Frame):
             self.timer["Pause"] = True
 
             # Clear out the frames to transition into settings
-            self.menu_frame.destroy()
-            self.menu_frame = None
-            self.game_canvas.destroy()
-            self.game_canvas = None
+            if self.menu_frame != None:
+                self.menu_frame.destroy()
+                self.menu_frame = None
             if self.register_frame != None:
                 self.register_frame.destroy()
                 self.register_frame = None
+            self.game_canvas.destroy()
+            self.game_canvas = None
 
             # Declare variables to be tracked
             variable = StringVar()
