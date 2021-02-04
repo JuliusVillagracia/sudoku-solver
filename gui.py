@@ -33,25 +33,16 @@ class GameGUI(Frame):
         # Initialize puzzle variables
         self.row, self.col = -1, -1
         self.original_puzzle = [
-            [1, 2, 3, 0, 0, 0, 0, 0, 0],
-            [4, 5, 6, 0, 0, 0, 0, 0, 0],
-            [7, 8, 9, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 2, 3, 0, 0, 0],
-            [0, 0, 0, 4, 5, 6, 0, 0, 0],
-            [0, 0, 0, 7, 8, 9, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 2, 3],
-            [0, 0, 0, 0, 0, 0, 4, 5, 6],
-            [0, 0, 0, 0, 0, 0, 7, 8, 9]]
-        self.puzzle = [
-            [1, 2, 3, 0, 0, 0, 0, 0, 0],
-            [4, 5, 6, 0, 0, 0, 0, 0, 0],
-            [7, 8, 9, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 2, 3, 0, 0, 0],
-            [0, 0, 0, 4, 5, 6, 0, 0, 0],
-            [0, 0, 0, 7, 8, 9, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 2, 3],
-            [0, 0, 0, 0, 0, 0, 4, 5, 6],
-            [0, 0, 0, 0, 0, 0, 7, 8, 9]]
+            [1, 2, 3, 5, 4, 7, 6, 9, 8],
+            [4, 5, 6, 2, 9, 8, 3, 1, 7],
+            [7, 8, 9, 3, 6, 1, 2, 4, 5],
+            [5, 6, 8, 1, 2, 3, 9, 7, 4],
+            [9, 0, 7, 4, 5, 6, 8, 3, 2],
+            [2, 3, 4, 7, 8, 9, 5, 6, 1],
+            [6, 9, 5, 8, 7, 4, 1, 2, 3],
+            [8, 7, 1, 9, 3, 2, 4, 5, 6],
+            [3, 4, 2, 6, 1, 5, 7, 8, 9]]
+        self.puzzle = deepcopy(self.original_puzzle)
         self.collection = {"Solution": None, "Moves": [], "Skip": False}
         self.timer = {"Hour": 0, "Minute": 0,
                       "Second": 0, "Millisecond": 0, "Pause": False}
@@ -128,14 +119,14 @@ class GameGUI(Frame):
 
     def updateTimer(self):
         # Check if the board has been solved
-        if algo.completeChecker(self.puzzle) and not algo.boardValidation(self.puzzle):
+        if algo.completeChecker(self.puzzle) and not algo.boardValidation(self.puzzle) and not self.win:
             # Raise the win flag after algorithm
             self.win = True
             # Update the puzzle
             self.drawPuzzle()
             # Re-initialize Menu
             self.initMenu()
-        elif self.win:
+        elif not algo.completeChecker(self.puzzle) or algo.boardValidation(self.puzzle) and self.win:
             # Lower the win flag if the solved board was changed
             self.win = False
             # Update the puzzle
@@ -160,8 +151,8 @@ class GameGUI(Frame):
             self.time_label.configure(text="{:0>2d}h {:0>2d}m {:0>2d}s".format(
                 self.timer["Hour"], self.timer["Minute"], self.timer["Second"]))
 
-            # Recurse the clock to update every second
-            self.after(10, self.updateTimer)
+        # Recurse the clock to update every second
+        self.after(10, self.updateTimer)
 
     def drawGrid(self):
         # Clear the canvas of any grid lines before drawing new ones
@@ -364,13 +355,16 @@ class GameGUI(Frame):
             # Update the GUI
             self.drawPuzzle()
             
+            # Check if the algorithm was already skipped
             if not self.collection["Skip"]:
                 # Delayed recursion for next step
                 self.after(2, self.display_algo)
             else:
+                # Reset moves and solve the puzzle
                 self.puzzle = self.collection["Solution"]
                 self.collection["Moves"] = []
 
+        # If the collection has already been skipped, reset it
         if self.collection["Skip"]:
             self.collection["Skip"] = False
 
@@ -388,14 +382,12 @@ class GameGUI(Frame):
             # Reset win flag and timer
             if self.win:
                 self.win = False
-                self.updateTimer()
 
             # Run through each step to the solution
             self.display_algo()
 
             # Clear out the menu to make room for a new frame
             self.submenu_frame.destroy()
-            # self.menu_frame = None
 
             # Create the Menu Frame and pack it into the frame
             self.submenu_frame = Frame(self.menu_frame, width=self.width,
@@ -417,7 +409,6 @@ class GameGUI(Frame):
             # Reset win flag and timer
             if self.win:
                 self.win = False
-                self.updateTimer()
 
             # Update the GUI
             self.drawPuzzle()
@@ -434,7 +425,6 @@ class GameGUI(Frame):
             # Reset win flag and timer
             if self.win:
                 self.win = False
-                self.updateTimer()
 
             # Update the GUI
             self.drawPuzzle()
@@ -481,11 +471,9 @@ class GameGUI(Frame):
                 # Re-intialize the menu
                 self.initMenu()
 
+                # Reset the timer
                 self.timer = {"Hour": 0, "Minute": 0,
                             "Second": 0, "Millisecond": 0, "Pause": False}
-
-                # Start-up the timer
-                self.updateTimer()
             else:
                 # Display the error prompt to the interface
                 self.prompt.configure(text=result)
@@ -493,6 +481,7 @@ class GameGUI(Frame):
             # Re-intialize the menu
             self.initMenu()
 
+            # Skip the whole algorithm
             self.collection["Skip"] = True
 
     def openSettings(self):
@@ -544,9 +533,6 @@ class GameGUI(Frame):
         # Re-initialize the game screen
         self.initBoard()
         self.initMenu()
-
-        # Start-up the timer
-        self.updateTimer()
 
     def updateSettings(self, option):
         # Update the screen size according to the option picked
