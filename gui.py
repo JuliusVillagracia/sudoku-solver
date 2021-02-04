@@ -33,11 +33,11 @@ class GameGUI(Frame):
         # Initialize puzzle variables
         self.row, self.col = -1, -1
         self.original_puzzle = [
-            [1, 2, 3, 5, 4, 7, 6, 9, 8],
+            [0, 0, 0, 5, 4, 7, 6, 9, 8],
             [4, 5, 6, 2, 9, 8, 3, 1, 7],
             [7, 8, 9, 3, 6, 1, 2, 4, 5],
             [5, 6, 8, 1, 2, 3, 9, 7, 4],
-            [9, 0, 7, 4, 5, 6, 8, 3, 2],
+            [9, 1, 7, 4, 5, 6, 8, 3, 2],
             [2, 3, 4, 7, 8, 9, 5, 6, 1],
             [6, 9, 5, 8, 7, 4, 1, 2, 3],
             [8, 7, 1, 9, 3, 2, 4, 5, 6],
@@ -92,9 +92,9 @@ class GameGUI(Frame):
         self.menu_frame.pack()
 
         # Create a label for the timer
-        self.time_label = Label(self.menu_frame, text="{:0>2d}h {:0>2d}m {:0>2d}s".format(
+        self.prompt_label = Label(self.menu_frame, text="{:0>2d}h {:0>2d}m {:0>2d}s".format(
             self.timer["Hour"], self.timer["Minute"], self.timer["Second"]), bg="white", relief='solid', height=self.margin//10, width=(self.width-self.margin*2))
-        self.time_label.pack()
+        self.prompt_label.pack()
 
         # Create a submenu inside a frame within the menu
         self.submenu_frame = Frame(self.menu_frame, width=(self.width-self.margin*2), height=self.menu-self.margin, bg="white")
@@ -148,7 +148,7 @@ class GameGUI(Frame):
                 self.timer["Millisecond"] += 10
 
             # Update the timer label in the menu_frame
-            self.time_label.configure(text="{:0>2d}h {:0>2d}m {:0>2d}s".format(
+            self.prompt_label.configure(text="{:0>2d}h {:0>2d}m {:0>2d}s".format(
                 self.timer["Hour"], self.timer["Minute"], self.timer["Second"]))
 
         # Recurse the clock to update every second
@@ -252,16 +252,14 @@ class GameGUI(Frame):
                     y = self.margin + i * self.cell_dim + self.cell_dim / 2
                     self.game_canvas.create_text(
                         x, y, text=self.puzzle[i][j], tags="entries", fill=color, font=font)
+        
+        # Raise the priority of the grid
+        self.game_canvas.tag_raise("grid_lines")
+        self.game_canvas.tag_raise("grid_thick")
 
-        # Update object stacking in the canvas
-        if self.game_canvas.find_withtag("locked_cells"):
-            # Raise the priority of the grid
-            self.game_canvas.tag_raise("grid_lines")
-            self.game_canvas.tag_raise("grid_thick")
-
-            # Check if a cell is highlighted and raise the highlight border
-            if self.game_canvas.find_withtag("selected_highlight"):
-                self.game_canvas.tag_raise("selected_highlight")
+        # Check if a cell is highlighted and raise the highlight border
+        if self.game_canvas.find_withtag("selected_highlight"):
+            self.game_canvas.tag_raise("selected_highlight")
 
     def cellClicked(self, event):
         # Extract screen coordinates when function is called from button
@@ -437,7 +435,6 @@ class GameGUI(Frame):
 
             # Clear out the menu to make room for a new frame
             self.submenu_frame.destroy()
-            # self.menu_frame = None
 
             # re-initialize the board to get it ready for input
             self.original_puzzle = [
@@ -455,6 +452,9 @@ class GameGUI(Frame):
             # Insert menu buttons into the grid and bind each with a command
             Button(self.submenu_frame, text="Enter", width=self.width-self.margin*2, height=self.margin, bg='#ffffff', activebackground='#ffffff',
                 relief='solid', command=lambda: self.closeSubmenu("Input")).pack(pady=(self.margin//2, 0))
+
+            # Display the prompt to the interface
+            self.prompt_label.configure(text="Press Enter after the puzzle input")
             
             # Let the button fill the whole frame
             self.submenu_frame.pack_propagate(0)
@@ -476,7 +476,7 @@ class GameGUI(Frame):
                             "Second": 0, "Millisecond": 0, "Pause": False}
             else:
                 # Display the error prompt to the interface
-                self.prompt.configure(text=result)
+                self.prompt_label.configure(text=result)
         elif function == "Solve":
             # Re-intialize the menu
             self.initMenu()
