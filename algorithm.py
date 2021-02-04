@@ -1,40 +1,37 @@
+# Import necessary libraries
+from random import randint, random, shuffle
+
 # Initialize variables
 board_size = 9
 sub_size = 3
 # Sample Puzzle
+# puzzle = [
+#     [0, 2, 0, 0, 0, 4, 3, 0, 0],
+#     [9, 0, 0, 0, 2, 0, 0, 0, 8],
+#     [0, 0, 0, 6, 0, 9, 0, 5, 0],
+#     [0, 0, 0, 0, 0, 0, 0, 0, 1],
+#     [0, 7, 2, 5, 0, 3, 6, 8, 0],
+#     [6, 0, 0, 0, 0, 0, 0, 0, 0],
+#     [0, 8, 0, 2, 0, 0, 0, 0, 0],
+#     [1, 0, 0, 0, 9, 0, 0, 0, 3],
+#     [0, 0, 9, 8, 0, 0, 0, 6, 0]
+# ]
+
 puzzle = [
-    [0, 2, 0, 0, 0, 4, 3, 0, 0],
-    [9, 0, 0, 0, 2, 0, 0, 0, 8],
-    [0, 0, 0, 6, 0, 9, 0, 5, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [0, 7, 2, 5, 0, 3, 6, 8, 0],
-    [6, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 8, 0, 2, 0, 0, 0, 0, 0],
-    [1, 0, 0, 0, 9, 0, 0, 0, 3],
-    [0, 0, 9, 8, 0, 0, 0, 6, 0]
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 9, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 4, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 5, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 5, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0, 5],
+    [3, 6, 0, 0, 0, 0, 0, 0, 0]
 ]
-
-'''
-Solution:
-[
-    [8, 2, 7, 1, 5, 4, 3, 9, 6],
-    [9, 6, 5, 3, 2, 7, 1, 4, 8],
-    [3, 4, 1, 6, 8, 9, 7, 5, 2],
-    [5, 9, 3, 4, 6, 8, 2, 7, 1],
-    [4, 7, 2, 5, 1, 3, 6, 8, 9],
-    [6, 1, 8, 9, 7, 2, 4, 3, 5],
-    [7, 8, 6, 2, 3, 5, 9, 1, 4],
-    [1, 5, 4, 7, 9, 6, 8, 2, 3],
-    [2, 3, 9, 8, 4, 1, 5, 6, 7]
-]
-'''
-
-# The easy puzzles contain 35-45 given numbers,
-# while the hardest all contain about 25-26.
-
 
 def printBoard(puzzle):
     # Print Readable Board On Terminal
+    print()
     for row in range(board_size):
         if row != 0 and row % sub_size == 0:
             print("- "*11)
@@ -85,7 +82,7 @@ def backtrack(puzzle, coordinates=(0, 0), moves=[]):
     x, y = coordinates
     # Set Base Case as the solved puzzle
     if completeChecker(puzzle) and not boardValidation(puzzle):
-        return {"Solution": puzzle, "Moves": moves}
+        return {"Solution": puzzle, "Moves": moves, "Skip": False}
     else:
         # Trace possible numbers for the cell
         if puzzle[x][y] == 0:
@@ -98,17 +95,18 @@ def backtrack(puzzle, coordinates=(0, 0), moves=[]):
                     solution = backtrack(
                         puzzle, coordinates=nextCoordinates(x, y), moves=moves)
                     # Return the found solution board and update moves list
-                    if solution:
+                    if solution["Solution"] != "Unsolvable":
                         return solution
                     # Reset the invalid and update the moves list
                     puzzle[x][y] = 0
                     moves.append([x, y, 0])
             # Return false if the algorithm finds no possible number to enter
-            return False
+            return {"Solution": "Unsolvable", "Moves": [], "Skip": False} # False
         # Skip the cell when it is already filled
         else:
             solution = backtrack(
-                puzzle, coordinates=nextCoordinates(x, y), moves=moves)
+                puzzle, coordinates=nextCoordinates(x, y), moves=moves
+            )
             return solution
 
 
@@ -152,15 +150,66 @@ def boardValidation(puzzle):
         # Reset Tracker
         check_col = []
 
-# Print results in the terminasl
+
+def generatePuzzle():
+    # Initialize a blank slate
+    puzzle = [[0 for col in range(board_size)]
+              for row in range(board_size)]
+
+    # Crawl through each sub matrix
+    for row in range(sub_size):
+        for col in range(sub_size):
+            # Randomize coordinates
+            x = randint(0, 2) * 3
+            y = randint(0, 2) * 3
+            # Initialize possible moves and shuffle it
+            possible = [val for val in range(1, board_size+1)]
+            shuffle(possible)
+            # Keep looping until a possibile entry is found
+            while possible:
+                # Choose one from the list and remove it from the possibility list
+                num = possible.pop()
+                # Update the puzzle when it is a valid move
+                if validityChecker(puzzle, row + x, col + y, num):
+                    puzzle[row + x][col + y] = num
+    
+    # Solve the template puzzle
+    puzzle = backtrack(puzzle, moves=[])["Solution"]
+
+    # Initialzie variable for total cells
+    total_cells = board_size * board_size 
+    # Randomize the difficulty
+    relative_difficulty = random()
+    # Set a 20% chance for the puzzle to have less hints than average
+    if relative_difficulty > 0.2:
+        removal = total_cells - randint(int(total_cells*0.45), int(total_cells*0.55))
+    else:
+        removal = total_cells - randint(int(total_cells*0.30), int(total_cells*0.35))
+    # Remove a number of entries within the puzzle
+    for i in range(removal):
+        while True:
+            # Randomize coordinates
+            x = randint(0, 8)
+            y = randint(0, 8)
+            # Only stop when a non-zero entry is found
+            if puzzle[x][y] != 0:
+                puzzle[x][y] = 0
+                break
+    # Return the generated puzzle
+    return puzzle
+
+
+# puzzle = generatePuzzle()
+
+# # Print results in the terminasl
 # print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
 # printBoard(puzzle)
 
 # print("\n~ ~ ~ SOLVED ~ ~ ~\n")
-# answer = initialValidation(puzzle)
+# answer = boardValidation(puzzle)
 # print('ANS: ', answer, end='\n\n')
 # if not answer:
+#     # print(backtrack(puzzle)["Moves"]) 
 #     printBoard(backtrack(puzzle)["Solution"])
-#     print(len(backtrack(puzzle)["Moves"]))
 # else:
 #     print("[!] The sudoku board has no solutions")

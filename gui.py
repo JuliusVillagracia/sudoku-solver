@@ -52,7 +52,7 @@ class GameGUI(Frame):
             [0, 0, 0, 0, 0, 0, 1, 2, 3],
             [0, 0, 0, 0, 0, 0, 4, 5, 6],
             [0, 0, 0, 0, 0, 0, 7, 8, 9]]
-        self.collection = {"Solution": None, "Moves": []}
+        self.collection = {"Solution": None, "Moves": [], "Skip": False}
         self.timer = {"Hour": 0, "Minute": 0,
                       "Second": 0, "Millisecond": 0, "Pause": False}
         self.win = False
@@ -92,47 +92,52 @@ class GameGUI(Frame):
         self.game_canvas.bind("<Key>", self.keyPressed)
 
     def initMenu(self):
-        # Initialize padding across the buttons
-        padding = self.margin // 2
-
+        if self.menu_frame:
+            self.menu_frame.destroy()
+        
         # Create the Menu Frame and pack it into the frame
-        self.menu_frame = Frame(self, width=self.width,
-                                height=self.menu, padx=self.margin, bg="white")
-        self.menu_frame.pack(fill='both')
+        self.menu_frame = Frame(self, width=self.width-self.margin*2,
+                                height=self.menu - self.margin, bg="red")
+        self.menu_frame.pack()
 
         # Create a label for the timer
         self.time_label = Label(self.menu_frame, text="{:0>2d}h {:0>2d}m {:0>2d}s".format(
-            self.timer["Hour"], self.timer["Minute"], self.timer["Second"]), bg="white", relief='solid', height=self.margin, width=(self.width-self.margin)//2)
-        self.time_label.grid(row=0, column=0, columnspan=2,
-                             sticky='NSEW', pady=(0, padding))
+            self.timer["Hour"], self.timer["Minute"], self.timer["Second"]), bg="white", relief='solid', height=self.margin//10, width=(self.width-self.margin*2))
+        self.time_label.pack()
+
+        # Create a submenu inside a frame within the menu
+        self.submenu_frame = Frame(self.menu_frame, width=(self.width-self.margin*2), height=self.menu-self.margin, bg="white")
+        self.submenu_frame.pack(fill='both')
 
         # Insert menu buttons into the grid and bind each with a command
-        Button(self.menu_frame, text="Solve", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff',
-               relief='solid', command=self.solveBoard).grid(row=1, column=0, sticky='NSEW', pady=(0, padding), padx=(0, padding))
+        Button(self.submenu_frame, text="Solve", width=(self.width-self.margin*2)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.solveBoard).grid(row=0, column=0, sticky='NSEW', pady=self.margin//2, padx=(0, self.margin//4))
 
-        Button(self.menu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff',
-               activebackground='#ffffff', relief='solid', command=self.resetBoard).grid(row=1, column=1, sticky='NSEW', pady=(0, padding))
+        Button(self.submenu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.resetBoard).grid(row=0, column=1, sticky='NSEW', pady=self.margin//2, padx=(self.margin//4, 0))
 
-        Button(self.menu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff',
-               relief='solid', command=self.generatePuzzle).grid(row=2, column=0, sticky='NSEW', pady=(0, self.margin), padx=(0, padding))
+        Button(self.submenu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.generatePuzzle).grid(row=1, column=0, sticky='NSEW', padx=(0, self.margin//4))
 
-        Button(self.menu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff',
-               activebackground='#ffffff', relief='solid', command=self.inputPuzzle).grid(row=2, column=1, sticky='NSEW', pady=(0, self.margin))
+        Button(self.submenu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.inputPuzzle).grid(row=1, column=1, sticky='NSEW', padx=(self.margin//4, 0))
 
-        # Configure grid formatting to fit equally into the frame
-        self.menu_frame.grid_columnconfigure(0, weight=1)
-        self.menu_frame.grid_rowconfigure(0, weight=1)
-        self.menu_frame.grid_columnconfigure(1, weight=1)
-        self.menu_frame.grid_rowconfigure(1, weight=1)
-        self.menu_frame.grid_columnconfigure(2, weight=1)
-        self.menu_frame.grid_rowconfigure(2, weight=1)
-        self.menu_frame.grid_propagate(0)
+        # Configure grid and pack formatting to fit equally into the frame
+        self.menu_frame.pack_propagate(0)
+        self.submenu_frame.grid_rowconfigure(0, weight=1)
+        self.submenu_frame.grid_columnconfigure(0, weight=1)
+        self.submenu_frame.grid_rowconfigure(1, weight=1)
+        self.submenu_frame.grid_columnconfigure(1, weight=1)
+        self.submenu_frame.grid_propagate(0)
 
     def updateTimer(self):
         # Check if the board has been solved
         if algo.completeChecker(self.puzzle) and not algo.boardValidation(self.puzzle):
-            # Raise the win flag agter algorithm
+            # Raise the win flag after algorithm
             self.win = True
+            # Update the puzzle
+            self.drawPuzzle()
+            # Re-initialize Menu
+            self.initMenu()
+        elif self.win:
+            # Lower the win flag if the solved board was changed
+            self.win = False
             # Update the puzzle
             self.drawPuzzle()
 
@@ -155,7 +160,7 @@ class GameGUI(Frame):
             self.time_label.configure(text="{:0>2d}h {:0>2d}m {:0>2d}s".format(
                 self.timer["Hour"], self.timer["Minute"], self.timer["Second"]))
 
-            # Recurce the clock to update every second
+            # Recurse the clock to update every second
             self.after(10, self.updateTimer)
 
     def drawGrid(self):
@@ -349,35 +354,57 @@ class GameGUI(Frame):
                     self.drawPuzzle()
 
     def display_algo(self):
-        # Select the earliest step in the collection and remove it from the list
-        self.puzzle[self.collection["Moves"][0][0]
-                    ][self.collection["Moves"][0][1]] = self.collection["Moves"][0][2]
-        self.collection["Moves"].pop(0)[0]
-
-        # Update the GUI
-        self.drawPuzzle()
-
         # Check if the algorithm still needs to go through anymore steps
         if self.collection["Moves"]:
-            # Delayed recursion for next step
-            self.after(2, self.display_algo)
+            # Select the earliest step in the collection and remove it from the list
+            self.puzzle[self.collection["Moves"][0][0]
+                        ][self.collection["Moves"][0][1]] = self.collection["Moves"][0][2]
+            self.collection["Moves"].pop(0)
+
+            # Update the GUI
+            self.drawPuzzle()
+            
+            if not self.collection["Skip"]:
+                # Delayed recursion for next step
+                self.after(2, self.display_algo)
+            else:
+                self.puzzle = self.collection["Solution"]
+                self.collection["Moves"] = []
+
+        if self.collection["Skip"]:
+            self.collection["Skip"] = False
 
     def solveBoard(self):
-        # Reset game variables
-        self.puzzle = deepcopy(self.original_puzzle)
-        self.timer = {"Hour": 0, "Minute": 0,
-                      "Second": 0, "Millisecond": 0, "Pause": False}
+        # Only allow button functionality when algorithm isn't running
+        if not self.collection["Moves"]:
+            # Reset game variables
+            self.puzzle = deepcopy(self.original_puzzle)
+            self.timer = {"Hour": 0, "Minute": 0,
+                          "Second": 0, "Millisecond": 0, "Pause": False}
 
-        # Call the function to run the algorithm
-        self.collection = algo.backtrack(deepcopy(self.original_puzzle))
+            # Call the function to run the algorithm
+            self.collection = algo.backtrack(deepcopy(self.original_puzzle), moves=[])
 
-        # Reset win flag and timer
-        if self.win:
-            self.win = False
-            self.updateTimer()
+            # Reset win flag and timer
+            if self.win:
+                self.win = False
+                self.updateTimer()
 
-        # Run through each step to the solution
-        self.display_algo()
+            # Run through each step to the solution
+            self.display_algo()
+
+            # Clear out the menu to make room for a new frame
+            self.submenu_frame.destroy()
+            # self.menu_frame = None
+
+            # Create the Menu Frame and pack it into the frame
+            self.submenu_frame = Frame(self.menu_frame, width=self.width,
+                                    height=self.menu, bg="white")
+            self.submenu_frame.pack(fill='both')
+
+            # Insert menu buttons into the grid and bind each with a command
+            Button(self.submenu_frame, text="Skip", width=self.width-self.margin*2, height=self.margin, bg='#ffffff', activebackground='#ffffff',
+                relief='solid', command=lambda: self.closeSubmenu("Solve")).pack(pady=(self.margin//2, 0))
 
     def resetBoard(self):
         # Only allow button functionality when algorithm isn't running
@@ -398,7 +425,19 @@ class GameGUI(Frame):
     def generatePuzzle(self):
         # Only allow button functionality when algorithm isn't running
         if not self.collection["Moves"]:
-            pass
+            # Reset game variables
+            self.original_puzzle = algo.generatePuzzle()
+            self.puzzle = deepcopy(self.original_puzzle)
+            self.timer = {"Hour": 0, "Minute": 0,
+                          "Second": 0, "Millisecond": 0, "Pause": False}
+
+            # Reset win flag and timer
+            if self.win:
+                self.win = False
+                self.updateTimer()
+
+            # Update the GUI
+            self.drawPuzzle()
 
     def inputPuzzle(self):
         # Only allow button functionality when algorithm isn't running
@@ -407,77 +446,54 @@ class GameGUI(Frame):
             self.win = False
 
             # Clear out the menu to make room for a new frame
-            self.menu_frame.destroy()
-            self.menu_frame = None
+            self.submenu_frame.destroy()
+            # self.menu_frame = None
 
             # re-initialize the board to get it ready for input
             self.original_puzzle = [
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0]]
-            self.puzzle = [
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+                [0 for col in range(self.board_size)] for row in range(self.board_size)]
+            self.puzzle = [[0 for col in range(self.board_size)]
+                           for row in range(self.board_size)]
             self.drawPuzzle()
-            self.timer = {"Hour": 0, "Minute": 0,
-                          "Second": 0, "Millisecond": 0, "Pause": False}
+            self.timer["Pause"] = True
 
-            # Create a new menu frame
-            self.register_frame = Frame(
-                self, width=self.width, height=self.menu, padx=self.margin, bg="white")
-            self.register_frame.pack(fill='both')
+            # Create the Menu Frame and pack it into the frame
+            self.submenu_frame = Frame(self.menu_frame, width=self.width,
+                                    height=self.menu, bg="white")
+            self.submenu_frame.pack(fill='both')
 
-            # Create a label for instructions and warnings
-            self.prompt = Label(self.register_frame, text="Press the button when you're done",
-                                bg="white", relief='solid', width=self.width)
-            self.prompt.grid(row=0, column=0, sticky='NSEW',
-                             pady=(0, self.margin))
-
-            # Add confirmation button when entry is done
-            Button(self.register_frame, text="Enter", bg='#ffffff', activebackground='#ffffff', relief='solid',
-                   command=self.enterPuzzle).grid(row=1, column=0, sticky='NSEW', pady=(0, self.margin))
-
-            # Configure grid formatting to fit equally into the frame
-            self.register_frame.grid_columnconfigure(0, weight=2)
-            self.register_frame.grid_rowconfigure(0, weight=2)
-            self.register_frame.grid_columnconfigure(1, weight=1)
-            self.register_frame.grid_rowconfigure(1, weight=1)
+            # Insert menu buttons into the grid and bind each with a command
+            Button(self.submenu_frame, text="Enter", width=self.width-self.margin*2, height=self.margin, bg='#ffffff', activebackground='#ffffff',
+                relief='solid', command=lambda: self.closeSubmenu("Input")).pack(pady=(self.margin//2, 0))
+            
             # Let the button fill the whole frame
-            self.register_frame.grid_propagate(0)
+            self.submenu_frame.pack_propagate(0)
 
-    def enterPuzzle(self):
-        # Check if the board is valid
-        result = algo.boardValidation(self.puzzle)
-        if not result:
-            # Clear out the menu to make room for a new frame
-            self.register_frame.destroy()
-            self.register_frame = None
+    def closeSubmenu(self, function):
+        if function == "Input": 
+            # Check if the board is valid
+            result = algo.boardValidation(self.puzzle)
+            if not result:
+                # Register the player input into the puzzle
+                self.original_puzzle = deepcopy(self.puzzle)
+                self.drawPuzzle()
 
-            # Register the player input into the puzzle
-            self.original_puzzle = deepcopy(self.puzzle)
-            self.drawPuzzle()
+                # Re-intialize the menu
+                self.initMenu()
 
+                self.timer = {"Hour": 0, "Minute": 0,
+                            "Second": 0, "Millisecond": 0, "Pause": False}
+
+                # Start-up the timer
+                self.updateTimer()
+            else:
+                # Display the error prompt to the interface
+                self.prompt.configure(text=result)
+        elif function == "Solve":
             # Re-intialize the menu
             self.initMenu()
 
-            # Start-up the timer
-            self.updateTimer()
-        else:
-            # Display the error prompt to the interface
-            self.prompt.configure(text=result)
+            self.collection["Skip"] = True
 
     def openSettings(self):
         # Only allow settings to open when algorithm isn't running
@@ -509,12 +525,10 @@ class GameGUI(Frame):
                   bg="white", font="cambria 15").pack()
 
             # Create the options menu for screen sizes
-            OptionMenu(self.settings_frame, variable, "Even Smaller", "Smaller", "Default",
-                       "Larger", "Even Larger", command=self.updateSettings).pack(fill='both')
+            OptionMenu(self.settings_frame, variable, "Even Smaller", "Smaller", "Default", "Larger", "Even Larger", command=self.updateSettings).pack(fill='both')
 
             # Create the button to get back to the game
-            Button(self.settings_frame, text="Register", width=(self.width-self.margin)//2, height=self.margin,
-                   bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.closeSettings).pack()
+            Button(self.settings_frame, text="Register", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', command=self.closeSettings).pack()
 
             # Let the frame be fully filled
             self.settings_frame.pack_propagate(0)
