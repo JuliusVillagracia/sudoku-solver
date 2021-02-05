@@ -22,7 +22,7 @@ class GameGUI(Frame):
         self.parent = parent
         Frame.__init__(self, parent, bg="white")
         self.parent.title("Sudoku")
-        self.parent.iconbitmap("grid.ico")
+        self.parent.iconbitmap("assets/grid.ico")
         self.pack(fill='both', expand=1)
         self.parent.geometry(str(self.width) + "x" +
                              str(self.height + self.menu) + "+1000+200")
@@ -66,7 +66,7 @@ class GameGUI(Frame):
         self.game_canvas.pack(fill='both', side='top')
 
         # Create Gear Icon for settings at the corner of the canvas
-        self.png = Image.open('settings.png')
+        self.png = Image.open('assets/settings.png')
         self.png = self.png.resize((self.margin, self.margin), Image.ANTIALIAS)
         self.img = ImageTk.PhotoImage(self.png)
         self.game_canvas.create_image(
@@ -116,19 +116,20 @@ class GameGUI(Frame):
         self.submenu_frame.grid_propagate(0)
 
     def updateTimer(self):
-        # Check if the board has been solved
-        if algo.completeChecker(self.puzzle) and not algo.boardValidation(self.puzzle) and not self.win:
-            # Raise the win flag after algorithm
-            self.win = True
-            # Update the puzzle
-            self.drawPuzzle()
-            # Re-initialize Menu
-            self.initMenu()
-        elif not algo.completeChecker(self.puzzle) or algo.boardValidation(self.puzzle) and self.win:
-            # Lower the win flag if the solved board was changed
-            self.win = False
-            # Update the puzzle
-            self.drawPuzzle()
+        if self.game_canvas:
+            # Check if the board has been solved
+            if algo.completeChecker(self.puzzle) and not algo.boardValidation(self.puzzle) and not self.win:
+                # Raise the win flag after algorithm
+                self.win = True
+                # Update the puzzle
+                self.drawPuzzle()
+                # Re-initialize Menu
+                self.initMenu()
+            elif not algo.completeChecker(self.puzzle) or algo.boardValidation(self.puzzle) and self.win:
+                # Lower the win flag if the solved board was changed
+                self.win = False
+                # Update the puzzle
+                self.drawPuzzle()
 
         # Cap the clock to update only when the menu_frame is visible
         if self.menu_frame and not self.timer["Pause"] and not self.win:
@@ -184,7 +185,8 @@ class GameGUI(Frame):
 
     def drawPuzzle(self):
         # Clear the canvas of any puzzle components before drawing new puzzle
-        self.game_canvas.delete("entries")
+        if self.game_canvas.find_withtag("entries"):
+            self.game_canvas.delete("entries")
         if self.game_canvas.find_withtag("locked_cells"):
             self.game_canvas.delete("locked_cells")
         if self.game_canvas.find_withtag("algo_filled"):
