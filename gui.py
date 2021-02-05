@@ -2,11 +2,9 @@
 from tkinter import Tk, Frame, Canvas, Button, Event, Label, StringVar, OptionMenu
 from PIL import ImageTk, Image
 from copy import deepcopy
-from time import sleep
 
 # Import Created Libraries
 import algorithm as algo
-
 
 class GameGUI(Frame):
     def __init__(self, parent):
@@ -557,7 +555,6 @@ class GameGUI(Frame):
         self.menu = self.margin * 2 + self.cell_dim * 2  # Extra space for the menu
         root.geometry(str(self.width) + "x" + str(self.height +
                                                   self.menu) + "+1000+200")  # Window Size
-
 
 # Initialize root window
 root = Tk()
