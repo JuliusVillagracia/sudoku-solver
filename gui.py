@@ -45,6 +45,7 @@ class GameGUI(Frame):
         self.timer = {"Hour": 0, "Minute": 0,
                       "Second": 0, "Millisecond": 0, "Pause": False}
         self.win = False
+        self.loading = False
 
         # Initialize Frames
         self.game_canvas = None
@@ -260,6 +261,8 @@ class GameGUI(Frame):
         # Check if a cell is highlighted and raise the highlight border
         if self.game_canvas.find_withtag("selected_highlight"):
             self.game_canvas.tag_raise("selected_highlight")
+        if self.game_canvas.find_withtag("load"):
+            self.game_canvas.tag_raise("load")
 
     def cellClicked(self, event):
         # Extract screen coordinates when function is called from button
@@ -368,7 +371,7 @@ class GameGUI(Frame):
 
     def solveBoard(self):
         # Only allow button functionality when algorithm isn't running
-        if not self.collection["Moves"]:
+        if not self.collection["Moves"] and not self.loading:
             # Reset game variables
             self.puzzle = deepcopy(self.original_puzzle)
             self.timer = {"Hour": 0, "Minute": 0,
@@ -398,7 +401,7 @@ class GameGUI(Frame):
 
     def resetBoard(self):
         # Only allow button functionality when algorithm isn't running
-        if not self.collection["Moves"]:
+        if not self.collection["Moves"] and not self.loading:
             # Reset game variables
             self.puzzle = deepcopy(self.original_puzzle)
             self.timer = {"Hour": 0, "Minute": 0,
@@ -412,24 +415,62 @@ class GameGUI(Frame):
             self.drawPuzzle()
 
     def generatePuzzle(self):
-        # Only allow button functionality when algorithm isn't running
-        if not self.collection["Moves"]:
-            # Reset game variables
-            self.original_puzzle = algo.generatePuzzle()
-            self.puzzle = deepcopy(self.original_puzzle)
-            self.timer = {"Hour": 0, "Minute": 0,
-                          "Second": 0, "Millisecond": 0, "Pause": False}
+        # Check if a puzzle is being generated
+        if not self.loading and not self.timer["Pause"]:
+            # Only allow button functionality when algorithm isn't running
+            if not self.collection["Moves"]:
+                # Reset win flag and timer
+                self.timer = {"Hour": 0, "Minute": 0,
+                            "Second": 0, "Millisecond": 0, "Pause": True}
+                if self.win:
+                    self.win = False
+                
+                # Clear the canvas with a blank slate
+                self.game_canvas.create_rectangle(
+                            self.margin, self.margin, self.width-self.margin, self.height-self.margin, fill='white', width=0, tags="load")
+                
+                # Re-initialize border
+                for i in range(4):
+                    x0 = self.margin if i == 3 else self.width - self.margin
+                    y0 = self.margin if i == 2 else self.height - self.margin
+                    x1 = self.margin if i != 0 else self.width - self.margin
+                    y1 = self.margin if i != 1 else self.height - self.margin
+                    self.game_canvas.create_line(
+                        x0, y0, x1, y1, fill="black", width=3, tags="load")
+                
+                # Write out the loading text
+                x = self.width / 2
+                y = self.height / 2
+                self.game_canvas.create_text(
+                    x, y, text="Generating Puzzle", tags="load", fill="black", font=("Inconsolata", int(20*self.screen_size), "bold"))
+                self.game_canvas.create_text(
+                    x, y+self.cell_dim//2, text="(This may take a while)", tags="load", fill="black", font=("Inconsolata", int(10*self.screen_size), ""))
+                
+                # Set the game state as loading
+                self.loading = True
+                
+                # Update the GUI
+                self.drawPuzzle()
+                
+                # Recurse the function to start generating after loading screen
+                self.after(500, self.generatePuzzle)
+        elif self.loading and self.timer["Pause"]:
+            # Only allow button functionality when algorithm isn't running
+            if not self.collection["Moves"]:
+                # Reset game variables
+                self.original_puzzle = algo.generatePuzzle()
+                self.puzzle = deepcopy(self.original_puzzle)
+                self.game_canvas.delete("load")
 
-            # Reset win flag and timer
-            if self.win:
-                self.win = False
+                self.loading = False
+                self.timer["Pause"] = False
 
-            # Update the GUI
-            self.drawPuzzle()
+                # Update the GUI
+                self.drawPuzzle()
 
     def inputPuzzle(self):
         # Only allow button functionality when algorithm isn't running
-        if not self.collection["Moves"]:
+        if not self.collection["Moves"] and not self.loading:
             # Reset win flag
             self.win = False
 
