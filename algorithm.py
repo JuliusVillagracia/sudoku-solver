@@ -132,7 +132,7 @@ def boardValidation(puzzle):
                 for num in range(1, board_size+1):
                     # Check sub matrices
                     if check_sub.count(num) > 1:
-                        return "[ ! ] " + str(num) + " was repeated repeatedly across sub matrix (" + str(x // sub_size) + ", " + str(y // sub_size) + ")"
+                        return "[!] " + str(num) + " was repeated across sub matrix (" + str(x // sub_size) + ", " + str(y // sub_size) + ")"
 
                 # Reset Tracker
                 check_sub = []
@@ -141,11 +141,11 @@ def boardValidation(puzzle):
         for num in range(1, board_size+1):
             # Check rows
             if puzzle[x].count(num) > 1:
-                return "[ ! ] " + str(num) + " was repeated repeatedly across row " + str(x)
+                return "[!] " + str(num) + " was repeated across row " + str(x)
 
             # Check columns
             if check_col.count(num) > 1:
-                return "[ ! ] " + str(num) + " was repeated repeatedly across column " + str(x)
+                return "[!] " + str(num) + " was repeated across column " + str(x)
 
         # Reset Tracker
         check_col = []
