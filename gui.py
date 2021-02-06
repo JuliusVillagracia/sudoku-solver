@@ -443,9 +443,9 @@ class GameGUI(Frame):
                 x = self.width / 2
                 y = self.height / 2
                 self.game_canvas.create_text(
-                    x, y, text="Generating Puzzle", tags="load", fill="black", font=("Inconsolata", int(20*self.screen_size), "bold"))
+                    x, y, text="Generating Puzzle", tags="load", fill="black", font=self.font+self.fontsize_large+" bold")
                 self.game_canvas.create_text(
-                    x, y+self.cell_dim//2, text="(This may take a while)", tags="load", fill="black", font=("Inconsolata", int(10*self.screen_size), ""))
+                    x, y+self.cell_dim//2, text="(This may take a while)", tags="load", fill="black", font=self.font+self.fontsize_small)
                 
                 # Set the game state as loading
                 self.loading = True
