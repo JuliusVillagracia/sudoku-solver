@@ -9,28 +9,32 @@ import algorithm as algo
 class GameGUI(Frame):
     def __init__(self, parent):
         # Configure GUI dimensions
-        self.board_size = 9  # Configure board size
-        self.screen_size = 1  # Screen size
+        self.board_size = 9
+        
+        # Initialize screen size legend and values
+        self.screen_size_legend = {"Even Smaller": 0.6, "Smaller": 0.8, "Default": 1, "Larger": 1.2, "Even Larger": 1.4}
+        self.screen_size_category = "Default"
+        self.screen_size = self.screen_size_legend[self.screen_size_category]
+        
+        # Dimensions
         self.margin = int(20 * self.screen_size)  # Space around the board
-        # Dimension of every board cell.
-        self.cell_dim = int(50 * self.screen_size)
-        self.width = self.height = self.margin * 2 + self.cell_dim * \
-            self.board_size  # Width and height of the whole board
+        self.cell_dim = int(50 * self.screen_size) # Dimension of every board cell.
+        self.width = self.height = self.margin * 2 + self.cell_dim * self.board_size
         self.menu = self.margin * 2 + self.cell_dim * 2  # Extra space for the menu
+        
+        # Fonts and font sizes
         self.font = "Inconsolata "
         self.fontsize_small = str(int(12*self.screen_size))
         self.fontsize_large = str(int(20*self.screen_size))
-        self.screen_size_category = "Default"
 
         # Configure parent of game frame
         self.parent = parent
         Frame.__init__(self, parent, bg="white")
         self.parent.title("Sudoku")
         self.parent.iconbitmap("assets/grid.ico")
+        self.parent.geometry(str(self.width) + "x" + str(self.height + self.menu))
+        self.parent.resizable(0, 0) # Prevent window resizing
         self.pack(fill='both', expand=1)
-        self.parent.geometry(str(self.width) + "x" +
-                             str(self.height + self.menu) + "+1000+200")
-        self.parent.resizable(0, 0)
 
         # Initialize puzzle variables
         self.row, self.col = -1, -1
@@ -90,27 +94,33 @@ class GameGUI(Frame):
         
         # Create the Menu Frame and pack it into the frame
         self.menu_frame = Frame(self, width=self.width-self.margin*2,
-                                height=self.menu - self.margin, bg="red")
+                                height=self.menu-self.margin, bg="white")
         self.menu_frame.pack()
 
         # Create a label for the timer
-        self.prompt_label = Label(self.menu_frame, text="{:0>2d}h {:0>2d}m {:0>2d}s".format(
-            self.timer["Hour"], self.timer["Minute"], self.timer["Second"]), bg="white", relief='solid', height=self.margin//15, width=(self.width-self.margin*2), font=self.font+self.fontsize_small)
+        self.prompt_label = Label(self.menu_frame, text="{:0>2d}h {:0>2d}m {:0>2d}s".format(self.timer["Hour"], self.timer["Minute"], self.timer["Second"]), bg="ghost white", relief='solid', height=self.margin//15, width=(self.width-self.margin*2), font=self.font+self.fontsize_small)
         self.prompt_label.pack()
 
         # Create a submenu inside a frame within the menu
         self.submenu_frame = Frame(self.menu_frame, width=(self.width-self.margin*2), height=self.menu-self.margin, bg="white")
         self.submenu_frame.pack(fill='both')
 
-        # Insert menu buttons into the grid and bind each with a command
-        Button(self.submenu_frame, text="Solve", width=(self.width-self.margin*2)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', font=self.font+self.fontsize_small, command=self.solveBoard).grid(row=0, column=0, sticky='NSEW', pady=self.margin//2, padx=(0, self.margin//4))
-
-        Button(self.submenu_frame, text="Reset", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', font=self.font+self.fontsize_small, command=self.resetBoard).grid(row=0, column=1, sticky='NSEW', pady=self.margin//2, padx=(self.margin//4, 0))
-
-        self.gen_btn = Button(self.submenu_frame, text="Generate", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', font=self.font+self.fontsize_small, command=self.generatePuzzle)
-        self.gen_btn.grid(row=1, column=0, sticky='NSEW', padx=(0, self.margin//4))
-
-        Button(self.submenu_frame, text="Input", width=(self.width-self.margin)//2, height=self.margin, bg='#ffffff', activebackground='#ffffff', relief='solid', font=self.font+self.fontsize_small, command=self.inputPuzzle).grid(row=1, column=1, sticky='NSEW', padx=(self.margin//4, 0))
+        # Initialize variables needed for the menu loop
+        texts = [["Solve", "Reset"], ["Generate", "Input"]]
+        commands = [[self.solveBoard, self.resetBoard], [self.generatePuzzle, self.inputPuzzle]]
+        self.menu_buttons = {"Solve": '', "Reset": '', "Generate": '', "Input": ''}
+        
+        # Loop through the grid of buttons
+        for x in range(2):
+            for y in range(2):
+                # Set the padding to equally space columns
+                xpadding = (0, self.margin//4) if y == 0 else (self.margin//4, 0)
+                
+                # Create and store the button
+                self.menu_buttons[texts[x][y]] = Button(self.submenu_frame, text=texts[x][y], width=(self.width-self.margin*2)//2, height=self.margin, bg='ghost white', activebackground='azure', relief='solid', font=self.font+self.fontsize_small, command=commands[x][y])
+                
+                # Insert each button into the menu in a 2x2 grid
+                self.menu_buttons[texts[x][y]].grid(row=x, column=y, sticky='NSEW', pady=(self.margin//2,0), padx=xpadding)
 
         # Configure grid and pack formatting to fit equally into the frame
         self.menu_frame.pack_propagate(0)
@@ -165,7 +175,7 @@ class GameGUI(Frame):
 
         # Loop and create horizontal and vertical lines across
         for i in range(self.board_size + 1):
-            color = "black" if i % 3 == 0 else "gray"
+            color = "black" if i % 3 == 0 else "seashell4"
             w = 3 if i % 3 == 0 else 1
             tag = "grid_thick" if i % 3 == 0 else "grid_lines"
 
@@ -207,10 +217,6 @@ class GameGUI(Frame):
         # Fill in each cell with the puzzle entry from the current puzzle state
         for i in range(self.board_size):
             for j in range(self.board_size):
-                # Differently format cell's containing hint entries
-                font = self.font+self.fontsize_large+" bold" if self.original_puzzle[i][j] != 0 else self.font+self.fontsize_large
-                color = "white" if self.original_puzzle[i][j] != 0 else "black"
-
                 # Check if the cell is filled
                 if self.puzzle[i][j] != 0:
                     x0 = self.margin + j * self.cell_dim
@@ -225,28 +231,32 @@ class GameGUI(Frame):
                             # Highlight the correct cells in the algorithm
                             if self.puzzle[i][j] == self.collection["Solution"][i][j] and streak:
                                 self.game_canvas.create_rectangle(
-                                    x0, y0, x1, y1, fill='green', width=0, tags="algo_filled")
+                                    x0, y0, x1, y1, fill='SeaGreen3', width=0, tags="algo_filled")
 
                             # Highlight the current cell in the algorithm
                             elif i == self.collection["Moves"][0][0] and j == self.collection["Moves"][0][1]:
                                 streak = False
                                 self.game_canvas.create_rectangle(
-                                    x0, y0, x1, y1, fill='red', width=0, tags="algo_current")
+                                    x0, y0, x1, y1, fill='plum1', width=0, tags="algo_current")
 
                             # Highlight the filled cells in the algorithm
                             else:
                                 streak = False
                                 self.game_canvas.create_rectangle(
-                                    x0, y0, x1, y1, fill='blue', width=0, tags="algo_filled")
+                                    x0, y0, x1, y1, fill='LightSkyBlue1', width=0, tags="algo_filled")
                     else:
                         # Universalize the color when the win flag is raised
                         self.game_canvas.create_rectangle(
-                            x0, y0, x1, y1, fill='orange', width=0, tags="solved_cells")
+                            x0, y0, x1, y1, fill='gold2', width=0, tags="solved_cells")
 
                 # Highlight hint entries with gray boxes
                 if self.original_puzzle[i][j] != 0:
                     self.game_canvas.create_rectangle(
-                        x0, y0, x1, y1, fill='gray', tags="locked_cells")
+                        x0, y0, x1, y1, fill='slate gray', tags="locked_cells")
+
+                # Differently format cell hint entries and player inputs
+                font = self.font+self.fontsize_large+" bold" if self.original_puzzle[i][j] != 0 else self.font+self.fontsize_large
+                color = "white" if self.original_puzzle[i][j] != 0 else "black"
 
                 # Draw entries into the canvas according to current puzzle state
                 if self.puzzle[i][j] != 0:
@@ -284,10 +294,8 @@ class GameGUI(Frame):
             self.game_canvas.focus_set()
 
             # Check which cell is selected_highlight in terms of coordinates unless function is called by key press in which case retain the extracted tuple
-            col = (
-                x_coor - self.margin) // self.cell_dim if type(event) == Event else x_coor
-            row = (
-                y_coor - self.margin) // self.cell_dim if type(event) == Event else y_coor
+            col = (x_coor - self.margin) // self.cell_dim if type(event) == Event else x_coor
+            row = (y_coor - self.margin) // self.cell_dim if type(event) == Event else y_coor
 
             # Check if cell clicked is already highlighted or not
             if col != self.col or row != self.row:
@@ -302,7 +310,7 @@ class GameGUI(Frame):
                     y1 = (self.margin + row * self.cell_dim) + \
                         self.cell_dim if i != 1 else self.margin + row * self.cell_dim
                     self.game_canvas.create_line(
-                        x0, y0, x1, y1, fill="red", width=3, tags="selected_highlight")
+                        x0, y0, x1, y1, fill="tomato", width=3, tags="selected_highlight")
             else:
                 # Reset cell coordinates as highlight is removed
                 col = row = -1
@@ -376,7 +384,7 @@ class GameGUI(Frame):
             # Reset game variables
             self.puzzle = deepcopy(self.original_puzzle)
             self.timer = {"Hour": 0, "Minute": 0,
-                          "Second": 0, "Millisecond": 0, "Pause": False}
+                          "Second": 0, "Millisecond": 0, "Pause": True}
 
             # Call the function to run the algorithm
             self.collection = algo.backtrack(deepcopy(self.original_puzzle), moves=[])
@@ -397,7 +405,7 @@ class GameGUI(Frame):
             self.submenu_frame.pack(fill='both')
 
             # Insert menu buttons into the grid and bind each with a command
-            Button(self.submenu_frame, text="Skip", width=self.width-self.margin*2, height=self.margin, bg='#ffffff', activebackground='#ffffff',
+            Button(self.submenu_frame, text="Skip", width=self.width-self.margin*2, height=self.margin, bg='ghost white', activebackground='azure',
                 relief='solid', font=self.font+self.fontsize_small, command=lambda: self.closeSubmenu("Solve")).pack(pady=(self.margin//2, 0))
 
     def resetBoard(self):
@@ -417,7 +425,7 @@ class GameGUI(Frame):
 
     def generatePuzzle(self):
         # Check if a puzzle is being generated
-        if not self.loading and not self.timer["Pause"]:
+        if not self.loading:
             # Only allow button functionality when algorithm isn't running
             if not self.collection["Moves"]:
                 # Reset win flag and timer
@@ -451,14 +459,14 @@ class GameGUI(Frame):
                 self.loading = True
 
                 # Clear button commands to avoid running algorithm multiple times
-                self.gen_btn.configure(command='')
+                self.menu_buttons["Generate"].configure(command='')
                 
                 # Update the GUI
                 self.drawPuzzle()
                 
                 # Recurse the function to start generating after loading screen
                 self.after(500, self.generatePuzzle)
-        elif self.loading and self.timer["Pause"]:
+        elif self.loading:
             # Only allow button functionality when algorithm isn't running
             if not self.collection["Moves"]:
                 # Generate the puzzle and update the game board
@@ -471,7 +479,7 @@ class GameGUI(Frame):
                 # Reset the game variables
                 self.loading = False
                 self.timer["Pause"] = False
-                self.gen_btn.configure(command=self.generatePuzzle)
+                self.menu_buttons["Generate"].configure(command=self.generatePuzzle)
 
                 # Update the GUI
                 self.drawPuzzle()
@@ -499,7 +507,7 @@ class GameGUI(Frame):
             self.submenu_frame.pack(fill='both')
 
             # Insert menu buttons into the grid and bind each with a command
-            Button(self.submenu_frame, text="Enter", width=self.width-self.margin*2, height=self.margin, bg='#ffffff', activebackground='#ffffff',
+            Button(self.submenu_frame, text="Enter", width=self.width-self.margin*2, height=self.margin, bg='ghost white', activebackground='azure',
                 relief='solid', font=self.font+self.fontsize_small, command=lambda: self.closeSubmenu("Input")).pack(pady=(self.margin//2, 0))
 
             # Display the prompt to the interface
@@ -517,9 +525,6 @@ class GameGUI(Frame):
                 self.original_puzzle = deepcopy(self.puzzle)
                 self.drawPuzzle()
 
-                # Re-intialize the menu
-                self.initMenu()
-
                 # Reset the timer
                 self.timer = {"Hour": 0, "Minute": 0,
                             "Second": 0, "Millisecond": 0, "Pause": False}
@@ -527,11 +532,11 @@ class GameGUI(Frame):
                 # Display the error prompt to the interface
                 self.prompt_label.configure(text=result)
         elif function == "Solve":
-            # Re-intialize the menu
-            self.initMenu()
-
             # Skip the whole algorithm
             self.collection["Skip"] = True
+        
+        # Re-intialize the menu
+        self.initMenu()
 
     def openSettings(self):
         # Only allow settings to open when algorithm isn't running
@@ -547,49 +552,39 @@ class GameGUI(Frame):
                 self.game_canvas.destroy()
                 self.game_canvas = None
 
-            # Declare variables to be tracked
-            variable1 = StringVar()
-            variable1.set(self.screen_size_category)
-
-            variable2 = StringVar()
-            variable2.set(self.font)
-
             # Initialize settings frame
             self.settings_frame = Frame(
                 self, width=self.width, height=self.height + self.menu, bg="white")
             self.settings_frame.pack(fill='both')
 
-            Label(self.settings_frame, text="<~ SETTINGS ~>",
+            Label(self.settings_frame, text="< ~ SETTINGS ~ >",
                   bg="white", font=self.font+self.fontsize_large+" bold", width=self.margin).pack(fill='both', padx=self.margin, pady=(self.margin, self.margin//2))
 
-            option1 = Frame(
-                self.settings_frame, width=self.width, height=self.height + self.menu, bg="white")
-            option1.pack(fill='both', pady=self.margin//2)
+            # Initialize variables for each option
+            option_var = [self.screen_size_category, self.font]
+            option_labels = ["Screen Size", "Font"]
+            option_choices = [
+                ("Even Smaller", "Smaller", "Default", "Larger", "Even Larger"), ("Inconsolata ", "Cambria ", "Helvetica ", "Times ")]
+            # Loop for each option in the settings
+            for i in range(2):
+                # Create a frame for each option row
+                setting = Frame(self.settings_frame, width=self.width, height=self.height + self.menu, bg="white")
+                setting.pack(fill='both', pady=self.margin//2)
 
-            # Create a label for the screen size option
-            Label(option1, text="Screen Size:",
-                  bg="white", font=self.font+self.fontsize_small, width=self.margin).pack(side='left', fill='both', padx=self.margin)
+                # Create a label for the screen size option
+                Label(setting, text=option_labels[i]+':', bg="white", font=self.font+self.fontsize_small+" bold", width=self.margin).pack(side='left', fill='both', padx=self.margin)
 
-            # Create the options menu for screen sizes
-            optionsMenu1 = OptionMenu(option1, variable1, "Even Smaller", "Smaller", "Default", "Larger", "Even Larger", command=self.updateSettings)
-            optionsMenu1.pack(fill='both', padx=(0, self.margin))
-            optionsMenu1.config(font=self.font+self.fontsize_small)
+                # Set a variable for the option menu
+                variable = StringVar()
+                variable.set(option_var[i])
 
-            option2 = Frame(
-                self.settings_frame, width=self.width, height=self.height + self.menu, bg="white")
-            option2.pack(fill='both', pady=self.margin//2)
-
-            # Create a label for the screen size option
-            Label(option2, text="Font:",
-                  bg="white", font=self.font+self.fontsize_small, width=self.margin).pack(side='left', fill='both', padx=self.margin)
-
-            # Create the options menu for screen sizes
-            optionsMenu2 = OptionMenu(option2, variable2, "Inconsolata ", "Cambria ", "Helvetica ", "Times ", command=self.updateSettings)
-            optionsMenu2.pack(fill='both', padx=(0, self.margin))
-            optionsMenu2.config(font=self.font+self.fontsize_small)
+                # Create the options menu for screen sizes
+                option_menu = OptionMenu(setting, variable, *option_choices[i], command=self.updateSettings)
+                option_menu.pack(fill='both', padx=(0, self.margin))
+                option_menu.config(font=self.font+self.fontsize_small, bg='ghost white', activebackground='azure', relief='groove', highlightthickness=0)
 
             # Create the button to get back to the game
-            Button(self.settings_frame, text="Apply", width=self.margin, bg='#ffffff', font=self.font+self.fontsize_small, activebackground='#ffffff', relief='solid', command=self.closeSettings).pack(padx=self.margin, pady=self.margin)
+            Button(self.settings_frame, text="Apply", width=self.margin, bg='ghost white', activebackground='azure', font=self.font+self.fontsize_small, relief='solid', command=self.closeSettings).pack(padx=self.margin, pady=self.margin)
 
             # Let the frame be fully filled
             self.settings_frame.pack_propagate(0)
@@ -607,47 +602,28 @@ class GameGUI(Frame):
         self.initMenu()
 
     def updateSettings(self, option):
-        # Update the screen size according to the option picked
-        if option == "Even Smaller":
-            self.screen_size = 0.6
-            self.screen_size_category = option
-        elif option == "Smaller":
-            self.screen_size = 0.8
-            self.screen_size_category = option
-        elif option == "Default":
-            self.screen_size = 1
-            self.screen_size_category = option
-        elif option == "Larger":
-            self.screen_size = 1.2
-            self.screen_size_category = option
-        elif option == "Even Larger":
-            self.screen_size = 1.4
-            self.screen_size_category = option
+        # Update the font used but the GUI
+        if option in ("Inconsolata ", "Cambria ", "Helvetica ", "Times "):
+            self.font = option
         
-        elif option == "Inconsolata ":
-            self.font = option
-        elif option == "Cambria ":
-            self.font = option
-        elif option == "Helvetica ":
-            self.font = option
-        elif option == "Times ":
-            self.font = option
+        # Change settings according to screen size change
+        elif option in ("Even Smaller", "Smaller", "Default", "Larger", "Even Larger"):
+            self.screen_size = self.screen_size_legend[option]
+            self.screen_size_category = option
 
-        # if type(option) == int:
-        self.fontsize_small = str(int(12*self.screen_size))
-        self.fontsize_large = str(int(20*self.screen_size))
+            # Reset font sizes according to screen size
+            self.fontsize_small = str(int(12*self.screen_size))
+            self.fontsize_large = str(int(20*self.screen_size))
 
-        # Reconfigure GUI settings
-        self.board_size = 9
-        self.margin = int(20 * self.screen_size)  # Space around the board
-        # Dimension of every board cell.
-        self.cell_dim = int(50 * self.screen_size)
-        self.width = self.height = self.margin * 2 + self.cell_dim * \
-            self.board_size  # Width and height of the whole board
-        self.menu = self.margin * 2 + self.cell_dim * 2  # Extra space for the menu
-        root.geometry(str(self.width) + "x" + str(self.height +
-                                                  self.menu) + "+1000+200")  # Window Size
+            # Reconfigure GUI settings
+            self.board_size = 9
+            self.margin = int(20 * self.screen_size)
+            self.cell_dim = int(50 * self.screen_size)
+            self.width = self.height = self.margin * 2 + self.cell_dim * self.board_size
+            self.menu = self.margin * 2 + self.cell_dim * 2 
+            root.geometry(str(self.width) + "x" + str(self.height + self.menu))
 
+        # Reset the settings
         self.settings_frame.destroy()
         self.openSettings()
 
