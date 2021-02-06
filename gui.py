@@ -525,6 +525,9 @@ class GameGUI(Frame):
                 self.original_puzzle = deepcopy(self.puzzle)
                 self.drawPuzzle()
 
+                # Re-intialize the menu
+                self.initMenu()
+
                 # Reset the timer
                 self.timer = {"Hour": 0, "Minute": 0,
                             "Second": 0, "Millisecond": 0, "Pause": False}
@@ -535,8 +538,8 @@ class GameGUI(Frame):
             # Skip the whole algorithm
             self.collection["Skip"] = True
         
-        # Re-intialize the menu
-        self.initMenu()
+            # Re-intialize the menu
+            self.initMenu()
 
     def openSettings(self):
         # Only allow settings to open when algorithm isn't running
