@@ -4,30 +4,6 @@ from random import randint, random, shuffle
 # Initialize variables
 board_size = 9
 sub_size = 3
-# Sample Puzzle
-# puzzle = [
-#     [0, 2, 0, 0, 0, 4, 3, 0, 0],
-#     [9, 0, 0, 0, 2, 0, 0, 0, 8],
-#     [0, 0, 0, 6, 0, 9, 0, 5, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0, 1],
-#     [0, 7, 2, 5, 0, 3, 6, 8, 0],
-#     [6, 0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 8, 0, 2, 0, 0, 0, 0, 0],
-#     [1, 0, 0, 0, 9, 0, 0, 0, 3],
-#     [0, 0, 9, 8, 0, 0, 0, 6, 0]
-# ]
-
-puzzle = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 9, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 4, 1, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 5, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 5, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0, 0, 0, 5],
-    [3, 6, 0, 0, 0, 0, 0, 0, 0]
-]
 
 def printBoard(puzzle):
     # Print Readable Board On Terminal
@@ -199,17 +175,56 @@ def generatePuzzle():
     return puzzle
 
 
-# puzzle = generatePuzzle()
+def solvabilityChecker(puzzle):
+    # Initialize a blank slate
+    invalid_moves = [[[] for col in range(board_size)]
+              for row in range(board_size)]
 
-# # Print results in the terminasl
-# print("\n~ ~ ~ ORIGINAL ~ ~ ~\n")
-# printBoard(puzzle)
+    # Loop through the board and find each hint
+    for x in range(board_size):
+        for y in range(board_size):
+            if puzzle[x][y]:
+                # Check rows and columns
+                for line in range(board_size):
+                    # Update invalid moves for the rows
+                    if not puzzle[line][y] and puzzle[x][y] not in invalid_moves[line][y]:
+                        invalid_moves[line][y].append(puzzle[x][y])
+                        # If the valid moves are reduced to one, update the puzzle and recurse the algorithm
+                        if len(invalid_moves[line][y]) == 8:
+                            for i in range(1, board_size+1): 
+                                if i not in invalid_moves[line][y]:
+                                    puzzle[line][y] = i
+                                    break
+                            return solvabilityChecker(puzzle)
 
-# print("\n~ ~ ~ SOLVED ~ ~ ~\n")
-# answer = boardValidation(puzzle)
-# print('ANS: ', answer, end='\n\n')
-# if not answer:
-#     # print(backtrack(puzzle)["Moves"]) 
-#     printBoard(backtrack(puzzle)["Solution"])
-# else:
-#     print("[!] The sudoku board has no solutions")
+                    # Update invalid moves for the columns
+                    if not puzzle[x][line] and puzzle[x][y] not in invalid_moves[x][line]:
+                        invalid_moves[x][line].append(puzzle[x][y])
+                        # If the valid moves are reduced to one, update the puzzle and recurse the algorithm
+                        if len(invalid_moves[x][line]) == 8:
+                            for i in range(1, board_size+1): 
+                                if i not in invalid_moves[x][line]:
+                                    puzzle[x][line] = i
+                                    break
+                            return solvabilityChecker(puzzle)
+
+                # Calculate start of each sub matrix
+                sub_row = x - x % sub_size
+                sub_col = y - y % sub_size
+
+                # loop through each cell in the sub matrix of the current entry
+                for row in range(sub_size):
+                    for col in range(sub_size):
+                        # Update invalid moves for the sub matrix
+                        if not puzzle[sub_row + row][sub_col + col] and puzzle[x][y] not in invalid_moves[sub_row + row][sub_col + col]:
+                            invalid_moves[sub_row + row][sub_col + col].append(puzzle[x][y])
+                            # If the valid moves are reduced to one, update the puzzle and recurse the algorithm
+                            if len(invalid_moves[sub_row + row][sub_col + col]) == 8:
+                                for i in range(1, board_size+1): 
+                                    if i not in invalid_moves[sub_row + row][sub_col + col]:
+                                        puzzle[sub_row + row][sub_col + col] = i
+                                        break
+                                return solvabilityChecker(puzzle)
+
+    # Finally, if everything seems correct, check validity of the puzzle
+    return boardValidation(puzzle)

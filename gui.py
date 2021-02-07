@@ -517,20 +517,25 @@ class GameGUI(Frame):
             self.submenu_frame.pack_propagate(0)
 
     def closeSubmenu(self, function):
-        if function == "Input": 
+        if function == "Input":
             # Check if the board is valid
             result = algo.boardValidation(self.puzzle)
             if not result:
-                # Register the player input into the puzzle
-                self.original_puzzle = deepcopy(self.puzzle)
-                self.drawPuzzle()
+                # Check if board is actually solvable
+                if not algo.solvabilityChecker(deepcopy(self.puzzle)):
+                    # Register the player input into the puzzle
+                    self.original_puzzle = deepcopy(self.puzzle)
+                    self.drawPuzzle()
 
-                # Re-intialize the menu
-                self.initMenu()
+                    # Re-intialize the menu
+                    self.initMenu()
 
-                # Reset the timer
-                self.timer = {"Hour": 0, "Minute": 0,
-                            "Second": 0, "Millisecond": 0, "Pause": False}
+                    # Reset the timer
+                    self.timer = {"Hour": 0, "Minute": 0,
+                                "Second": 0, "Millisecond": 0, "Pause": False}
+                else:
+                    # Display the error prompt to the interface
+                    self.prompt_label.configure(text='[!] The Input Puzzle is Unsolvable')
             else:
                 # Display the error prompt to the interface
                 self.prompt_label.configure(text=result)
